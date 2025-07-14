@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft-like Game with Three.js</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: none;
+        }
+
+        /* Hidden until game starts */
+        #crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 20px;
+            color: white;
+            display: none;
+            /* Hidden until game starts */
+        }
+
+        #debug {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-family: Arial, sans-serif;
+            display: none;
+            /* Hidden until game starts */
+        }
+
+        #debug-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            max-width: 300px;
+            max-height: 80vh;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            display: none;
+            /* Hidden until game starts */
+        }
+
+        #start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Minecraft', Arial, sans-serif;
+        }
+
+        #in-game-ui {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            font-family: 'Minecraft', Arial, sans-serif;
+            color: white;
+            display: none;
+            /* Hidden until game starts */
+        }
+
+        .minecraft-button {
+            background: #555555;
+            color: white;
+            border: 2px solid #333333;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .minecraft-button:hover {
+            background: #777777;
+        }
+
+        select.minecraft-select {
+            background: #555555;
+            color: white;
+            border: 2px solid #333333;
+            padding: 5px;
+            font-size: 14px;
+            font-family: 'Minecraft', Arial, sans-serif;
+            margin-right: 10px;
+        }
+
+        @font-face {
+            font-family: 'Minecraft';
+            src: url('https://cdn.jsdelivr.net/npm/@fontsource/minecraft@4.5.0/files/minecraft-webfont.woff2') format('woff2');
+        }
+    </style>
+</head>
+
+<body>
+    <div id="start-screen">
+        <button id="start-button" class="minecraft-button">Start Game</button>
+    </div>
+    <div id="crosshair">+</div>
+    <div id="debug">Click to lock pointer</div>
+    <div id="debug-panel"></div>
+    <div id="in-game-ui">
+        <select id="block-type-select" class="minecraft-select">
+            <option value="dirt">Dirt</option>
+            <option value="grass">Grass</option>
+        </select>
+        <button id="exit-button" class="minecraft-button">Exit Game</button>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script>
+        // Scene setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true; // Enable shadows
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Smooth shadow edges
+        document.body.appendChild(renderer.domElement);
+
+        // Debug panel setup
+        const debugPanel = document.getElementById('debug-panel');
+        let debugMessages = [];
+        function addDebugMessage(msg) {
+            debugMessages.push(msg);
+            if (debugMessages.length > 5) debugMessages.shift(); // Keep last 5 messages
+        }
+
+        // Load textures
+        const textureLoader = new THREE.TextureLoader();
+        const grassTopTexture = textureLoader.load(
+            'https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/1.21.1/assets/minecraft/textures/block/grass_block_top.png',
+            () => addDebugMessage('Grass top texture loaded'),
+            undefined,
+            (err) => addDebugMessage('Error loading grass top texture: ' + err.message)
+        );
+        const grassSideTexture = textureLoader.load(
+            'https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/1.21.1/assets/minecraft/textures/block/grass_block_side.png',
+            () => addDebugMessage('Grass side texture loaded'),
+            undefined,
+            (err) => addDebugMessage('Error loading grass side texture: ' + err.message)
+        );
+        const dirtTexture = textureLoader.load(
+            'https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/1.21.1/assets/minecraft/textures/block/dirt.png',
+            () => addDebugMessage('Dirt texture loaded'),
+            undefined,
+            (err) => addDebugMessage('Error loading dirt texture: ' + err.message)
+        );
+        [grassTopTexture, grassSideTexture, dirtTexture].forEach(texture => {
+            texture.magFilter = THREE.NearestFilter; // Pixelated look
+            texture.minFilter = THREE.NearestFilter;
+        });
+
+        // Add lighting
+        const ambientLight = new THREE.AmbientLight(0x606060); // Brighter ambient light
+        scene.add(ambientLight);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8); // Stronger sunlight
+        directionalLight.position.set(10, 20, 10); // High-angle sunlight
+        directionalLight.castShadow = true; // Enable shadow casting
+        directionalLight.shadow.mapSize.width = 1024; // Shadow resolution
+        directionalLight.shadow.mapSize.height = 1024;
+        directionalLight.shadow.camera.near = 0.5;
+        directionalLight.shadow.camera.far = 50;
+        directionalLight.shadow.camera.left = -20;
+        directionalLight.shadow.camera.right = 20;
+        directionalLight.shadow.camera.top = 20;
+        directionalLight.shadow.camera.bottom = -20;
+        scene.add(directionalLight);
+        const pointLight = new THREE.PointLight(0xffffff, 0.3, 10); // Subtle player light
+        scene.add(pointLight);
+        addDebugMessage('Lighting initialized: Ambient(0x606060), Directional(0xffffff, 0.8), Point(0xffffff, 0.3)');
+
+        // Block materials
+        const grassMaterial = new THREE.MeshLambertMaterial({ color: 0x4CAF50 }); // Solid color for terrain
+        const dirtMaterial = new THREE.MeshLambertMaterial({ color: 0x8b4513 }); // Solid color for terrain
+        const texturedGrassMaterial = [
+            new THREE.MeshLambertMaterial({ map: grassSideTexture }), // Right
+            new THREE.MeshLambertMaterial({ map: grassSideTexture }), // Left
+            new THREE.MeshLambertMaterial({ map: grassTopTexture }),  // Top
+            new THREE.MeshLambertMaterial({ map: dirtTexture }),      // Bottom
+            new THREE.MeshLambertMaterial({ map: grassSideTexture }), // Front
+            new THREE.MeshLambertMaterial({ map: grassSideTexture })  // Back
+        ];
+        const texturedDirtMaterial = new THREE.MeshLambertMaterial({ map: dirtTexture }); // Uniform dirt texture
+        const outlineMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true });
+        const npcMaterial = new THREE.LineBasicMaterial({ color: 0xff0000 }); // Red lines for NPCs
+        addDebugMessage('Materials initialized: Grass(0x4CAF50), Dirt(0x8b4513), TexturedGrass, TexturedDirt, Outline(0xffffff), NPC(0xff0000)');
+
+        // World data: 3D array to store blocks
+        const worldSize = 16;
+        const world = {};
+        function setBlock(x, y, z, type) {
+            const key = `${x},${y},${z}`;
+            world[key] = type;
+        }
+        function getBlock(x, y, z) {
+            return world[`${x},${y},${z}`] || null;
+        }
+        function removeBlock(x, y, z) {
+            const key = `${x},${y},${z}`;
+            if (world[key]) {
+                const block = scene.getObjectByName(key);
+                if (block) scene.remove(block);
+                delete world[key];
+            }
+        }
+
+        // Player setup
+        const player = {
+            position: new THREE.Vector3(8, 3.5, 8), // Adjusted starting height
+            velocity: new THREE.Vector3(0, 0, 0),
+            height: 1.8,
+            width: 0.4, // Smaller collision box
+            speed: 0.0717, // Approx. Minecraft walking speed (4.3 blocks/sec at 60 FPS)
+            jumpStrength: 0.2,
+            gravity: -0.01
+        };
+        camera.position.copy(player.position);
+
+        // Camera rotation smoothing
+        const targetRotation = { x: 0, y: 0 };
+        const currentRotation = { x: 0, y: 0 };
+        const rotationSmoothing = 0.1; // Lower = smoother
+        pointLight.position.set(player.position.x, player.position.y + 0.5, player.position.z); // Set initial point light position
+
+        // NPC setup
+        const npcs = [];
+        function createNPC(x, z) {
+            const npcGroup = new THREE.Group();
+            npcGroup.name = `npc_${x}_${z}`;
+            // Simple stick figure: head, torso, arms, legs
+            const points = [
+                // Torso (vertical line)
+                new THREE.Vector3(0, 0.5, 0), new THREE.Vector3(0, 1.5, 0),
+                // Head (small square)
+                new THREE.Vector3(-0.1, 1.5, -0.1), new THREE.Vector3(0.1, 1.5, -0.1),
+                new THREE.Vector3(0.1, 1.5, -0.1), new THREE.Vector3(0.1, 1.5, 0.1),
+                new THREE.Vector3(0.1, 1.5, 0.1), new THREE.Vector3(-0.1, 1.5, 0.1),
+                new THREE.Vector3(-0.1, 1.5, 0.1), new THREE.Vector3(-0.1, 1.5, -0.1),
+                // Arms
+                new THREE.Vector3(-0.1, 1.2, 0), new THREE.Vector3(0.1, 1.2, 0),
+                // Legs
+                new THREE.Vector3(-0.1, 0.5, 0), new THREE.Vector3(-0.1, 0, 0),
+                new THREE.Vector3(0.1, 0.5, 0), new THREE.Vector3(0.1, 0, 0)
+            ];
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            const line = new THREE.LineSegments(geometry, npcMaterial);
+            npcGroup.add(line);
+            npcGroup.position.set(x, 1, z); // Place on ground (y=1 for standing on y=0 blocks)
+            scene.add(npcGroup);
+            const npc = {
+                group: npcGroup,
+                position: new THREE.Vector3(x, 1, z),
+                velocity: new THREE.Vector3(0, 0, 0),
+                moveTimer: Math.random() * 2 + 1, // Random move change between 1-3 seconds
+                speed: 0.05
+            };
+            addDebugMessage(`NPC ${npcs.length} created at: x=${x}, y=1, z=${z}`);
+            return npc;
+        }
+
+        // Game state
+        let isGameRunning = false;
+        let selectedBlockType = 'dirt';
+        let animationFrameId = null;
+
+        // UI elements
+        const startScreen = document.getElementById('start-screen');
+        const inGameUI = document.getElementById('in-game-ui');
+        const startButton = document.getElementById('start-button');
+        const exitButton = document.getElementById('exit-button');
+        const blockTypeSelect = document.getElementById('block-type-select');
+        const crosshair = document.getElementById('crosshair');
+        const debugText = document.getElementById('debug');
+
+        // Initialize terrain
+        function initTerrain() {
+            for (let x = 0; x < worldSize; x++) {
+                for (let z = 0; z < worldSize; z++) {
+                    const geometry = new THREE.BoxGeometry(1, 1, 1);
+                    const block = new THREE.Mesh(geometry, grassMaterial);
+                    block.position.set(x, 0, z);
+                    block.name = `${x},0,${z}`;
+                    block.isBlock = true; // Mark as block for raycasting
+                    block.castShadow = true; // Enable shadow casting
+                    block.receiveShadow = true; // Enable shadow receiving
+                    scene.add(block);
+                    setBlock(x, 0, z, 'grass');
+                }
+            }
+        }
+
+        // Initialize NPCs
+        function initNPCs() {
+            npcs.length = 0; // Clear existing NPCs
+            for (let i = 0; i < 3; i++) {
+                const x = Math.floor(Math.random() * (worldSize - 2)) + 1;
+                const z = Math.floor(Math.random() * (worldSize - 2)) + 1;
+                npcs.push(createNPC(x, z));
+            }
+        }
+
+        // Start game
+        function startGame() {
+            isGameRunning = true;
+            startScreen.style.display = 'none';
+            renderer.domElement.style.display = 'block';
+            crosshair.style.display = 'block';
+            debugText.style.display = 'block';
+            debugPanel.style.display = 'block';
+            inGameUI.style.display = 'block';
+            initTerrain();
+            initNPCs();
+            player.position.set(8, 3.5, 8);
+            camera.position.copy(player.position);
+            pointLight.position.set(player.position.x, player.position.y + 0.5, player.position.z);
+            targetRotation.x = 0;
+            targetRotation.y = 0;
+            currentRotation.x = 0;
+            currentRotation.y = 0;
+            addDebugMessage('Game started');
+            animate();
+        }
+
+        // Exit game
+        function exitGame() {
+            isGameRunning = false;
+            cancelAnimationFrame(animationFrameId);
+            startScreen.style.display = 'flex';
+            renderer.domElement.style.display = 'none';
+            crosshair.style.display = 'none';
+            debugText.style.display = 'none';
+            debugPanel.style.display = 'none';
+            inGameUI.style.display = 'none';
+            // Clear world
+            Object.keys(world).forEach(key => {
+                const block = scene.getObjectByName(key);
+                if (block) scene.remove(block);
+            });
+            world = {};
+            // Clear NPCs
+            npcs.forEach(npc => scene.remove(npc.group));
+            npcs.length = 0;
+            // Reset player
+            player.position.set(8, 3.5, 8);
+            player.velocity.set(0, 0, 0);
+            addDebugMessage('Game exited');
+        }
+
+        // NPC collision detection
+        function canNPCMoveTo(x, z) {
+            const checkX = Math.floor(x);
+            const checkZ = Math.floor(z);
+            // Check for blocks at y=1 (obstacles above ground)
+            const block = getBlock(checkX, 1, checkZ);
+            // Check boundaries with NPC size (±0.1)
+            if (x < 0.1 || x >= worldSize - 0.1 || z < 0.1 || z >= worldSize - 0.1 || block) {
+                addDebugMessage(`NPC collision or out of bounds at: x=${checkX}, y=1, z=${checkZ} (block: ${block})`);
+                return false;
+            }
+            return true;
+        }
+
+        // Keyboard controls
+        const keys = {};
+        document.addEventListener('keydown', (e) => {
+            if (!isGameRunning) return;
+            addDebugMessage(`Key pressed: ${e.code}`);
+            keys[e.code] = true;
+        });
+        document.addEventListener('keyup', (e) => {
+            if (!isGameRunning) return;
+            keys[e.code] = false;
+        });
+
+        // Mouse controls for block interaction
+        const raycaster = new THREE.Raycaster();
+        raycaster.far = 5; // Limit raycast distance to 5 units (Minecraft-like)
+        const mouse = new THREE.Vector2(0, 0); // Center for crosshair
+        let currentOutline = null; // Track current outlined block
+        let isBreaking = false; // Prevent rapid breaking
+        let breakTimer = 0; // Delay for block breaking
+        document.addEventListener('contextmenu', (e) => {
+            if (isGameRunning) e.preventDefault();
+        });
+        document.addEventListener('mousedown', (e) => {
+            if (!isGameRunning) return;
+            if (isBreaking) return; // Prevent spamming
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(scene.children.filter(obj => obj.isBlock));
+            if (intersects.length > 0) {
+                const intersect = intersects[0];
+                const pos = intersect.object.position;
+                addDebugMessage(`Raycast hit block at: x=${pos.x}, y=${pos.y}, z=${pos.z}`);
+                if (e.button === 0) { // Left click to remove block
+                    isBreaking = true;
+                    breakTimer = 0.3; // 300ms delay (Minecraft-like)
+                    setTimeout(() => {
+                        removeBlock(Math.floor(pos.x), Math.floor(pos.y), Math.floor(pos.z));
+                        isBreaking = false;
+                    }, 300);
+                } else if (e.button === 2) { // Right click to place block
+                    const normal = intersect.face.normal;
+                    const newPos = pos.clone().add(normal);
+                    const x = Math.floor(newPos.x);
+                    const y = Math.floor(newPos.y);
+                    const z = Math.floor(newPos.z);
+                    if (!getBlock(x, y, z)) {
+                        const geometry = new THREE.BoxGeometry(1, 1, 1);
+                        const material = selectedBlockType === 'grass' ? texturedGrassMaterial : texturedDirtMaterial;
+                        const block = new THREE.Mesh(geometry, material);
+                        block.position.set(x, y, z);
+                        block.name = `${x},${y},${z}`;
+                        block.isBlock = true; // Mark as block
+                        block.castShadow = true; // Enable shadow casting
+                        block.receiveShadow = true; // Enable shadow receiving
+                        scene.add(block);
+                        setBlock(x, y, z, selectedBlockType);
+                        addDebugMessage(`Placed block (${selectedBlockType}) at: x=${x}, y=${y}, z=${z}`);
+                    }
+                }
+            } else {
+                addDebugMessage('No block hit by raycaster');
+            }
+        });
+
+        // Lock pointer for camera control
+        document.addEventListener('click', (e) => {
+            if (!isGameRunning) return;
+            if (e.target === renderer.domElement) {
+                renderer.domElement.requestPointerLock();
+            }
+        });
+        document.addEventListener('pointerlockchange', () => {
+            if (!isGameRunning) return;
+            if (document.pointerLockElement === renderer.domElement) {
+                debugText.textContent = 'Pointer locked - Use WASD to move';
+            } else {
+                debugText.textContent = 'Click to lock pointer';
+            }
+        });
+        document.addEventListener('mousemove', (e) => {
+            if (!isGameRunning) return;
+            if (document.pointerLockElement === renderer.domElement) {
+                // Update target rotation with reduced sensitivity
+                targetRotation.y -= e.movementX * 0.001; // Lower sensitivity (Minecraft-like)
+                targetRotation.x -= e.movementY * 0.001;
+                targetRotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, targetRotation.x)); // Clamp pitch
+                // Camera angles in degrees for debug
+                const pitchDeg = (targetRotation.x * 180 / Math.PI).toFixed(1);
+                const yawDeg = (targetRotation.y * 180 / Math.PI).toFixed(1);
+                addDebugMessage(`Camera rotation: pitch=${pitchDeg}°, yaw=${yawDeg}°`);
+            }
+        });
+
+        // UI event listeners
+        startButton.addEventListener('click', startGame);
+        exitButton.addEventListener('click', exitGame);
+        blockTypeSelect.addEventListener('change', (e) => {
+            selectedBlockType = e.target.value;
+            addDebugMessage(`Block type changed to: ${selectedBlockType}`);
+        });
+
+        // Improved collision detection for player
+        function canMoveTo(x, y, z) {
+            const feet = Math.floor(y - player.height); // y=1.7 -> 1
+            const head = Math.floor(y); // y=3.5 -> 3
+            const checkX = Math.floor(x);
+            const checkZ = Math.floor(z);
+            // Only check for obstacles above ground level (y >= 1)
+            const feetBlock = y > player.height + 0.1 ? getBlock(checkX, feet, checkZ) : null;
+            const headBlock = getBlock(checkX, head, checkZ);
+            if (feetBlock || headBlock) {
+                addDebugMessage(`Collision at: x=${checkX}, y=${feet}, z=${checkZ} (feet: ${feetBlock}), y=${head} (head: ${headBlock})`);
+                return false;
+            }
+            addDebugMessage(`Move allowed to: x=${x.toFixed(2)}, y=${y.toFixed(2)}, z=${z.toFixed(2)}`);
+            return true;
+        }
+
+        // Block highlighting
+        function updateBlockHighlight() {
+            if (currentOutline) {
+                scene.remove(currentOutline);
+                currentOutline = null;
+            }
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(scene.children.filter(obj => obj.isBlock));
+            if (intersects.length > 0) {
+                const intersect = intersects[0];
+                const pos = intersect.object.position;
+                const geometry = new THREE.BoxGeometry(1.01, 1.01, 1.01); // Slightly larger for visibility
+                currentOutline = new THREE.Mesh(geometry, outlineMaterial);
+                currentOutline.position.copy(pos);
+                scene.add(currentOutline);
+            }
+        }
+
+        // Animation loop
+        function animate() {
+            if (!isGameRunning) return;
+            animationFrameId = requestAnimationFrame(animate);
+
+            // Apply gravity to player
+            player.velocity.y += player.gravity;
+            player.position.add(player.velocity);
+
+            // Ground collision for player
+            if (player.position.y < player.height) {
+                player.position.y = player.height;
+                player.velocity.y = 0;
+            }
+
+            // Player movement
+            const direction = new THREE.Vector3();
+            if (keys['KeyW']) direction.z -= 1;
+            if (keys['KeyS']) direction.z += 1;
+            if (keys['KeyA']) direction.x -= 1;
+            if (keys['KeyD']) direction.x += 1;
+            if (keys['Space'] && player.position.y <= player.height) player.velocity.y = player.jumpStrength;
+
+            // Normalize and apply player movement
+            if (direction.length() > 0) {
+                direction.normalize();
+                const move = direction.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), currentRotation.y); // Use smoothed yaw
+                move.y = 0;
+                move.multiplyScalar(player.speed);
+                const newPos = player.position.clone().add(move);
+                if (canMoveTo(newPos.x, player.position.y, newPos.z)) {
+                    player.position.x = newPos.x;
+                    player.position.z = newPos.z;
+                }
+            }
+
+            // Smooth camera rotation
+            currentRotation.x += (targetRotation.x - currentRotation.x) * rotationSmoothing;
+            currentRotation.y += (targetRotation.y - currentRotation.y) * rotationSmoothing;
+            camera.rotation.set(currentRotation.x, currentRotation.y, 0);
+
+            // Update NPCs
+            npcs.forEach((npc, index) => {
+                npc.moveTimer -= 1 / 60; // Assume 60 FPS
+                if (npc.moveTimer <= 0) {
+                    // Randomly change direction
+                    npc.velocity.set(
+                        (Math.random() - 0.5) * 2 * npc.speed,
+                        0,
+                        (Math.random() - 0.5) * 2 * npc.speed
+                    );
+                    npc.moveTimer = Math.random() * 2 + 1; // Reset timer (1-3 seconds)
+                }
+                const newPos = npc.position.clone().add(npc.velocity);
+                if (canNPCMoveTo(newPos.x, newPos.z)) {
+                    npc.position.x = newPos.x;
+                    npc.position.z = newPos.z;
+                    // Clamp NPC position to world boundaries
+                    npc.position.x = Math.max(0.1, Math.min(worldSize - 0.1, npc.position.x));
+                    npc.position.z = Math.max(0.1, Math.min(worldSize - 0.1, npc.position.z));
+                    npc.group.position.set(npc.position.x, 1, npc.position.z);
+                    addDebugMessage(`NPC ${index} moved to: x=${npc.position.x.toFixed(2)}, y=1, z=${npc.position.z.toFixed(2)}`);
+                }
+            });
+
+            // Update point light position
+            pointLight.position.set(player.position.x, player.position.y + 0.5, player.position.z);
+
+            // Update block highlight
+            updateBlockHighlight();
+
+            // Update camera
+            camera.position.copy(player.position);
+
+            // Update debug panel
+            const pitchDeg = (currentRotation.x * 180 / Math.PI).toFixed(1);
+            const yawDeg = (currentRotation.y * 180 / Math.PI).toFixed(1);
+            let debugText = `Player: x=${player.position.x.toFixed(2)}, y=${player.position.y.toFixed(2)}, z=${player.position.z.toFixed(2)}\n`;
+            debugText += `Camera: pitch=${pitchDeg}°, yaw=${yawDeg}°\n`;
+            npcs.forEach((npc, index) => {
+                debugText += `NPC ${index}: x=${npc.position.x.toFixed(2)}, z=${npc.position.z.toFixed(2)}\n`;
+            });
+            debugText += '\nLogs:\n' + debugMessages.join('\n');
+            debugPanel.innerHTML = debugText;
+
+            renderer.render(scene, camera);
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+
+</html>

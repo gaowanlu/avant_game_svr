@@ -1,6 +1,5 @@
 package.path = avant.LuaDir .. "/?.lua;" .. package.path
 package.path = avant.LuaDir .. "/Player/?.lua;" .. package.path
-package.path = avant.LuaDir .. "/Map/?.lua;" .. package.path
 package.path = avant.LuaDir .. "/Debug/?.lua;" .. package.path
 
 local Log = require("Log")

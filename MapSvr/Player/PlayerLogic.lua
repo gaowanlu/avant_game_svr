@@ -60,12 +60,12 @@ function Player:OnTick()
     end
 
     -- 将Player的DB数据传给C++解析为Protobuf C++ 会将包传给MapSvr.OnLuaVMRecvMessage
-    local res = avant.Lua2Protobuf(self.RoleDbData, 10);
-    if res == nil then
-        Log:Error("avant.Lua2Protobuf res nil ");
-    else
-        -- Log:Error("avant.Lua2Protobuf res " .. " " .. res);
-    end
+    -- local res = avant.Lua2Protobuf(self.RoleDbData, 10);
+    -- if res == nil then
+    --     Log:Error("avant.Lua2Protobuf res nil ");
+    -- else
+    --     Log:Error("avant.Lua2Protobuf res " .. " " .. res);
+    -- end
 
     -- Log:Error("=>PlayerOnTick playerId %d x %d y %d level %d", self.RoleDbData.id, self.RoleDbData.x, self.RoleDbData.y,
     --     self.RoleDbData.Info.level)

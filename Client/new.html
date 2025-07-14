@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft-like Game with Three.js</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: none;
+        }
+
+        /* Hidden until game starts */
+        #crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 20px;
+            color: white;
+            display: none;
+        }
+
+        #debug {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-family: Arial, sans-serif;
+            display: none;
+        }
+
+        #debug-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            max-width: 300px;
+            max-height: 80vh;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            display: none;
+        }
+
+        #start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Minecraft Font', Arial, sans-serif;
+        }
+
+        #in-game-ui {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            font-family: 'Minecraft Font', Arial, sans-serif;
+            color: white;
+            display: none;
+        }
+
+        .minecraft-button {
+            background: #555555;
+            color: white;
+            border: 2px solid #333333;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .minecraft-button:hover {
+            background: #777777;
+        }
+
+        select.minecraft-select {
+            background: #555555;
+            color: white;
+            border: 2px solid #333333;
+            padding: 5px;
+            font-size: 14px;
+            font-family: 'Minecraft Font', Arial, sans-serif;
+            margin-right: 10px;
+        }
+
+        @font-face {
+            font-family: 'Minecraft Font';
+            src: url('https://cdn.jsdelivr.net/npm/@fontsource/minecraft-font@5.0.4/files/minecraft-five-v2-latin-regular.woff2') format('woff2');
+        }
+    </style>
+</head>
+
+<body>
+    <div id="start-screen">
+        <button id="start-button" class="minecraft-button">Start Game</button>
+    </div>
+    <div id="crosshair">+</div>
+    <div id="debug">Click to lock pointer</div>
+    <div id="debug-panel"></div>
+    <div id="in-game-ui">
+        <select id="block-type-select" class="minecraft-select">
+            <option value="dirt">Dirt</option>
+            <option value="grass">Grass</option>
+        </select>
+        <button id="exit-button" class="minecraft-button">Exit Game</button>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js" defer></script>
+    <script>
+        // Wait for DOM and scripts to load before executing game logic
+        window.addEventListener('DOMContentLoaded', () => {
+            if (typeof THREE === 'undefined') {
+                const debugPanel = document.getElementById('debug-panel');
+                debugPanel.style.display = 'block';
+                debugPanel.innerHTML = 'Error: Three.js failed to load. Please check the network or CDN.';
+                console.error('Three.js is not defined. Ensure the Three.js script loads correctly.');
+                return;
+            }
+
+            /**
+             * Manages texture loading and materials.
+             */
+            class AssetManager {
+                constructor() {
+                    this.textureLoader = new THREE.TextureLoader();
+                    this.materials = {};
+                    this.textures = {};
+                    this.texturesLoaded = false;
+                }
+
+                /**
+                 * Loads textures and initializes materials.
+                 * @param {function} debugCallback - Callback to log debug messages.
+                 * @returns {Promise} Resolves when all textures are loaded.
+                 */
+                loadAssets(debugCallback) {
+                    return new Promise((resolve, reject) => {
+                        let loadedCount = 0;
+                        const totalTextures = 3;
+
+                        const onLoad = (textureName) => {
+                            debugCallback(`${textureName} texture loaded`);
+                            loadedCount++;
+                            if (loadedCount === totalTextures) {
+                                this.texturesLoaded = true;
+                                this.initializeMaterials(debugCallback);
+                                resolve();
+                            }
+                        };
+
+                        const onError = (textureName, err) => {
+                            debugCallback(`Error loading ${textureName} texture: ${err.message}`);
+                            reject(err);
+                        };
+
+                        this.textures.grassTop = this.textureLoader.load(
+                            'https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/1.21.1/assets/minecraft/textures/block/grass_block_top.png',
+                            () => onLoad('Grass top'),
+                            undefined,
+                            (err) => onError('Grass top', err)
+                        );
+                        this.textures.grassSide = this.textureLoader.load(
+                            'https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/1.21.1/assets/minecraft/textures/block/grass_block_side.png',
+                            () => onLoad('Grass side'),
+                            undefined,
+                            (err) => onError('Grass side', err)
+                        );
+                        this.textures.dirt = this.textureLoader.load(
+                            'https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/1.21.1/assets/minecraft/textures/block/dirt.png',
+                            () => onLoad('Dirt'),
+                            undefined,
+                            (err) => onError('Dirt', err)
+                        );
+
+                        Object.values(this.textures).forEach(texture => {
+                            texture.magFilter = THREE.NearestFilter;
+                            texture.minFilter = THREE.NearestFilter;
+                        });
+                    });
+                }
+
+                /**
+                 * Initializes materials after textures are loaded.
+                 * @param {function} debugCallback - Callback to log debug messages.
+                 */
+                initializeMaterials(debugCallback) {
+                    this.materials.grassTerrain = new THREE.MeshLambertMaterial({ color: 0x4CAF50 });
+                    this.materials.dirtTerrain = new THREE.MeshLambertMaterial({ color: 0x8b4513 });
+                    this.materials.texturedGrass = new THREE.MeshLambertMaterial({ map: this.textures.grassSide });
+                    this.materials.texturedDirt = new THREE.MeshLambertMaterial({ map: this.textures.dirt });
+                    this.materials.outline = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true });
+                    this.materials.npc = new THREE.LineBasicMaterial({ color: 0xff0000 });
+
+                    debugCallback('Materials initialized: Grass(0x4CAF50), Dirt(0x8b4513), TexturedGrass(single), TexturedDirt, Outline(0xffffff), NPC(0xff0000)');
+                    this.validateMaterials(debugCallback);
+                }
+
+                /**
+                 * Validates materials to ensure they are correctly configured.
+                 * @param {function} debugCallback - Callback to log debug messages.
+                 */
+                validateMaterials(debugCallback) {
+                    const materials = [
+                        { name: 'grassTerrain', material: this.materials.grassTerrain },
+                        { name: 'dirtTerrain', material: this.materials.dirtTerrain },
+                        { name: 'texturedGrass', material: this.materials.texturedGrass },
+                        { name: 'texturedDirt', material: this.materials.texturedDirt },
+                        { name: 'outline', material: this.materials.outline },
+                        { name: 'npc', material: this.materials.npc }
+                    ];
+                    materials.forEach(({ name, material }) => {
+                        if (!material) {
+                            debugCallback(`Validation error: ${name} material is undefined`);
+                            return;
+                        }
+                        if (material.map && !material.map.isTexture) {
+                            debugCallback(`Validation error: ${name} material has invalid map property`);
+                        }
+                    });
+                    debugCallback('Material validation completed');
+                }
+
+                /**
+                 * Gets material for a block type.
+                 * @param {string} type - Block type ('grass', 'dirt').
+                 * @param {boolean} isTerrain - Whether the block is terrain.
+                 * @returns {THREE.Material|THREE.Material[]} Material for the block.
+                 */
+                getMaterial(type, isTerrain = false) {
+                    if (!this.texturesLoaded) {
+                        console.warn(`Textures not loaded for material: ${type}`);
+                        return isTerrain ?
+                            (type === 'grass' ? new THREE.MeshLambertMaterial({ color: 0x4CAF50 }) : new THREE.MeshLambertMaterial({ color: 0x8b4513 })) :
+                            new THREE.MeshLambertMaterial({ color: 0x8b4513 });
+                    }
+                    if (isTerrain) return type === 'grass' ? this.materials.grassTerrain : this.materials.dirtTerrain;
+                    return type === 'grass' ? this.materials.texturedGrass : this.materials.texturedDirt;
+                }
+            }
+
+            /**
+             * Manages the game world and blocks.
+             */
+            class Map {
+                constructor(size) {
+                    this.size = size;
+                    this.blocks = {};
+                    this.scene = null;
+                }
+
+                /**
+                 * Initializes the map with a scene.
+                 * @param {THREE.Scene} scene - The Three.js scene.
+                 */
+                init(scene) {
+                    this.scene = scene;
+                }
+
+                /**
+                 * Sets a block at the given coordinates.
+                 * @param {number} x - X coordinate.
+                 * @param {number} y - Y coordinate.
+                 * @param {number} z - Z coordinate.
+                 * @param {string} type - Block type.
+                 * @param {THREE.Material|THREE.Material[]} material - Block material.
+                 * @param {boolean} isTerrain - Whether the block is terrain.
+                 */
+                setBlock(x, y, z, type, material, isTerrain = false) {
+                    const key = `${x},${y},${z}`;
+                    this.blocks[key] = new Block(x, y, z, type, material, isTerrain);
+                    this.blocks[key].addToScene(this.scene);
+                }
+
+                /**
+                 * Gets a block at the given coordinates.
+                 * @param {number} x - X coordinate.
+                 * @param {number} y - Y coordinate.
+                 * @param {number} z - Z coordinate.
+                 * @returns {Block|null} The block or null.
+                 */
+                getBlock(x, y, z) {
+                    return this.blocks[`${x},${y},${z}`] || null;
+                }
+
+                /**
+                 * Removes a block at the given coordinates.
+                 * @param {number} x - X coordinate.
+                 * @param {number} y - Y coordinate.
+                 * @param {number} z - Z coordinate.
+                 */
+                removeBlock(x, y, z) {
+                    const key = `${x},${y},${z}`;
+                    if (this.blocks[key]) {
+                        this.blocks[key].removeFromScene(this.scene);
+                        delete this.blocks[key];
+                    }
+                }
+
+                /**
+                 * Initializes terrain with grass blocks.
+                 * @param {AssetManager} assetManager - The asset manager.
+                 */
+                initTerrain(assetManager) {
+                    for (let x = 0; x < this.size; x++) {
+                        for (let z = 0; z < this.size; z++) {
+                            this.setBlock(x, 0, z, 'grass', assetManager.getMaterial('grass', true), true);
+                        }
+                    }
+                }
+
+                /**
+                 * Clears all blocks.
+                 */
+                clear() {
+                    Object.keys(this.blocks).forEach(key => this.blocks[key].removeFromScene(this.scene));
+                    this.blocks = {};
+                }
+            }
+
+            /**
+             * Represents a block in the world.
+             */
+            class Block {
+                constructor(x, y, z, type, material, isTerrain = false) {
+                    this.position = new THREE.Vector3(x, y, z);
+                    this.type = type;
+                    this.mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), material);
+                    this.mesh.position.set(x, y, z);
+                    this.mesh.name = `${x},${y},${z}`;
+                    this.mesh.isBlock = true;
+                    if (!isTerrain) {
+                        this.mesh.castShadow = true;
+                        this.mesh.receiveShadow = true;
+                    }
+                }
+
+                /**
+                 * Adds the block to the scene.
+                 * @param {THREE.Scene} scene - The Three.js scene.
+                 */
+                addToScene(scene) {
+                    scene.add(this.mesh);
+                }
+
+                /**
+                 * Removes the block from the scene.
+                 * @param {THREE.Scene} scene - The Three.js scene.
+                 */
+                removeFromScene(scene) {
+                    scene.remove(this.mesh);
+                }
+            }
+
+            /**
+             * Base class for game entities (player, NPCs).
+             */
+            class Actor {
+                constructor(x, y, z) {
+                    this.position = new THREE.Vector3(x, y, z);
+                    this.velocity = new THREE.Vector3(0, 0, 0);
+                }
+
+                /**
+                 * Updates the actor’s position with collision detection.
+                 * @param {Map} map - The game map.
+                 * @param {number} worldSize - The world size.
+                 */
+                update(map, worldSize) {
+                    // To be implemented by subclasses
+                }
+            }
+
+            /**
+             * Player role with camera and movement.
+             */
+            class Player extends Actor {
+                constructor(x, y, z, camera) {
+                    super(x, y, z);
+                    this.camera = camera;
+                    this.height = 1.8;
+                    this.width = 0.4;
+                    this.speed = 0.0717;
+                    this.jumpStrength = 0.2;
+                    this.gravity = -0.01;
+                    this.targetRotation = { x: 0, y: 0 };
+                    this.currentRotation = { x: 0, y: 0 };
+                    this.rotationSmoothing = 0.1;
+                    this.camera.position.copy(this.position);
+                }
+
+                /**
+                 * Checks if the player can move to a position.
+                 * @param {number} x - X coordinate.
+                 * @param {number} y - Y coordinate.
+                 * @param {number} z - Z coordinate.
+                 * @param {Map} map - The game map.
+                 * @returns {boolean} Whether movement is allowed.
+                 */
+                canMoveTo(x, y, z, map) {
+                    const feet = Math.floor(y - this.height);
+                    const head = Math.floor(y);
+                    const checkX = Math.floor(x);
+                    const checkZ = Math.floor(z);
+                    const feetBlock = y > this.height + 0.1 ? map.getBlock(checkX, feet, checkZ) : null;
+                    const headBlock = map.getBlock(checkX, head, checkZ);
+                    if (feetBlock || headBlock) {
+                        return false;
+                    }
+                    return true;
+                }
+
+                /**
+                 * Updates player position and camera.
+                 * @param {Map} map - The game map.
+                 * @param {Object} keys - Keyboard input state.
+                 * @param {function} debugCallback - Callback to log debug messages.
+                 */
+                update(map, keys, debugCallback) {
+                    // Apply gravity
+                    this.velocity.y += this.gravity;
+                    this.position.add(this.velocity);
+
+                    // Ground collision
+                    if (this.position.y < this.height) {
+                        this.position.y = this.height;
+                        this.velocity.y = 0;
+                    }
+
+                    // Player movement
+                    const direction = new THREE.Vector3();
+                    if (keys['KeyW']) direction.z -= 1;
+                    if (keys['KeyS']) direction.z += 1;
+                    if (keys['KeyA']) direction.x -= 1;
+                    if (keys['KeyD']) direction.x += 1;
+                    if (keys['Space'] && this.position.y <= this.height) this.velocity.y = this.jumpStrength;
+
+                    if (direction.length() > 0) {
+                        direction.normalize();
+                        const move = direction.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), this.currentRotation.y);
+                        move.y = 0;
+                        move.multiplyScalar(this.speed);
+                        const newPos = this.position.clone().add(move);
+                        if (this.canMoveTo(newPos.x, this.position.y, newPos.z, map)) {
+                            this.position.x = newPos.x;
+                            this.position.z = newPos.z;
+                            debugCallback(`Move allowed to: x=${newPos.x.toFixed(2)}, y=${newPos.y.toFixed(2)}, z=${newPos.z.toFixed(2)}`);
+                        } else {
+                            debugCallback(`Collision at: x=${Math.floor(newPos.x)}, y=${Math.floor(newPos.y - this.height)}, z=${Math.floor(newPos.z)}`);
+                        }
+                    }
+
+                    // Smooth camera rotation
+                    this.currentRotation.x += (this.targetRotation.x - this.currentRotation.x) * this.rotationSmoothing;
+                    this.currentRotation.y += (this.targetRotation.y - this.currentRotation.y) * this.rotationSmoothing;
+                    this.camera.rotation.set(this.currentRotation.x, this.currentRotation.y, 0);
+                    this.camera.position.copy(this.position);
+                }
+
+                /**
+                 * Updates camera rotation based on mouse movement.
+                 * @param {MouseEvent} event - Mouse movement event.
+                 * @param {function} debugCallback - Callback to log debug messages.
+                 */
+                updateRotation(event, debugCallback) {
+                    this.targetRotation.y -= event.movementX * 0.001;
+                    this.targetRotation.x -= event.movementY * 0.001;
+                    this.targetRotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.targetRotation.x));
+                    const pitchDeg = (this.targetRotation.x * 180 / Math.PI).toFixed(1);
+                    const yawDeg = (this.targetRotation.y * 180 / Math.PI).toFixed(1);
+                    debugCallback(`Camera rotation: pitch=${pitchDeg}°, yaw=${yawDeg}°`);
+                }
+            }
+
+            /**
+             * NPC role with random movement.
+             */
+            class NPC extends Actor {
+                constructor(x, z, scene, material) {
+                    super(x, 1, z);
+                    this.group = new THREE.Group();
+                    this.group.name = `npc_${x}_${z}`;
+                    const points = [
+                        new THREE.Vector3(0, 0.5, 0), new THREE.Vector3(0, 1.5, 0),
+                        new THREE.Vector3(-0.1, 1.5, -0.1), new THREE.Vector3(0.1, 1.5, -0.1),
+                        new THREE.Vector3(0.1, 1.5, -0.1), new THREE.Vector3(0.1, 1.5, 0.1),
+                        new THREE.Vector3(0.1, 1.5, 0.1), new THREE.Vector3(-0.1, 1.5, 0.1),
+                        new THREE.Vector3(-0.1, 1.5, 0.1), new THREE.Vector3(-0.1, 1.5, -0.1),
+                        new THREE.Vector3(-0.1, 1.2, 0), new THREE.Vector3(0.1, 1.2, 0),
+                        new THREE.Vector3(-0.1, 0.5, 0), new THREE.Vector3(-0.1, 0, 0),
+                        new THREE.Vector3(0.1, 0.5, 0), new THREE.Vector3(0.1, 0, 0)
+                    ];
+                    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                    const line = new THREE.LineSegments(geometry, material);
+                    this.group.add(line);
+                    this.group.position.set(x, 1, z);
+                    scene.add(this.group);
+                    this.velocity = new THREE.Vector3(0, 0, 0);
+                    this.moveTimer = Math.random() * 2 + 1;
+                    this.speed = 0.05;
+                }
+
+                /**
+                 * Checks if the NPC can move to a position.
+                 * @param {number} x - X coordinate.
+                 * @param {number} z - Z coordinate.
+                 * @param {Map} map - The game map.
+                 * @param {number} worldSize - The world size.
+                 * @returns {boolean} Whether movement is allowed.
+                 */
+                canMoveTo(x, z, map, worldSize) {
+                    const checkX = Math.floor(x);
+                    const checkZ = Math.floor(z);
+                    const block = map.getBlock(checkX, 1, checkZ);
+                    if (x < 0.1 || x >= worldSize - 0.1 || z < 0.1 || z >= worldSize - 0.1 || block) {
+                        return false;
+                    }
+                    return true;
+                }
+
+                /**
+                 * Updates NPC position.
+                 * @param {Map} map - The game map.
+                 * @param {number} worldSize - The world size.
+                 * @param {function} debugCallback - Callback to log debug messages.
+                 */
+                update(map, worldSize, debugCallback) {
+                    this.moveTimer -= 1 / 60;
+                    if (this.moveTimer <= 0) {
+                        this.velocity.set(
+                            (Math.random() - 0.5) * 2 * this.speed,
+                            0,
+                            (Math.random() - 0.5) * 2 * this.speed
+                        );
+                        this.moveTimer = Math.random() * 2 + 1;
+                    }
+                    const newPos = this.position.clone().add(this.velocity);
+                    if (this.canMoveTo(newPos.x, newPos.z, map, worldSize)) {
+                        this.position.x = newPos.x;
+                        this.position.z = newPos.z;
+                        this.position.x = Math.max(0.1, Math.min(worldSize - 0.1, this.position.x));
+                        this.position.z = Math.max(0.1, Math.min(worldSize - 0.1, this.position.z));
+                        this.group.position.set(this.position.x, 1, this.position.z);
+                        debugCallback(`NPC moved to: x=${this.position.x.toFixed(2)}, y=1, z=${this.position.z.toFixed(2)}`);
+                    }
+                }
+
+                /**
+                 * Removes the NPC from the scene.
+                 * @param {THREE.Scene} scene - The Three.js scene.
+                 */
+                remove(scene) {
+                    scene.remove(this.group);
+                }
+            }
+
+            /**
+             * Manages user input (keyboard, mouse).
+             */
+            class Control {
+                constructor(player, map, scene, assetManager) {
+                    this.player = player;
+                    this.map = map;
+                    this.scene = scene;
+                    this.assetManager = assetManager;
+                    this.keys = {};
+                    this.raycaster = new THREE.Raycaster();
+                    this.raycaster.far = 5;
+                    this.mouse = new THREE.Vector2(0, 0);
+                    this.currentOutline = null;
+                    this.isBreaking = false;
+                    this.selectedBlockType = 'dirt';
+                    this.setupEventListeners();
+                }
+
+                /**
+                 * Sets up input event listeners.
+                 */
+                setupEventListeners() {
+                    document.addEventListener('keydown', (e) => {
+                        if (!Game.isRunning) return;
+                        this.keys[e.code] = true;
+                        Game.debug(`Key pressed: ${e.code}`);
+                    });
+                    document.addEventListener('keyup', (e) => {
+                        if (!Game.isRunning) return;
+                        this.keys[e.code] = false;
+                    });
+                    document.addEventListener('contextmenu', (e) => {
+                        if (Game.isRunning) e.preventDefault();
+                    });
+                    document.addEventListener('mousedown', (e) => {
+                        if (!Game.isRunning || this.isBreaking) return;
+                        this.raycaster.setFromCamera(this.mouse, this.player.camera);
+                        const intersects = this.raycaster.intersectObjects(Object.values(this.map.blocks).map(b => b.mesh));
+                        if (intersects.length > 0) {
+                            const intersect = intersects[0];
+                            const pos = intersect.object.position;
+                            Game.debug(`Raycast hit block at: x=${pos.x}, y=${pos.y}, z=${pos.z}`);
+                            if (e.button === 0) {
+                                this.isBreaking = true;
+                                setTimeout(() => {
+                                    this.map.removeBlock(Math.floor(pos.x), Math.floor(pos.y), Math.floor(pos.z));
+                                    this.isBreaking = false;
+                                }, 300);
+                            } else if (e.button === 2) {
+                                const normal = intersect.face.normal;
+                                const newPos = pos.clone().add(normal);
+                                const x = Math.floor(newPos.x);
+                                const y = Math.floor(newPos.y);
+                                const z = Math.floor(newPos.z);
+                                if (!this.map.getBlock(x, y, z)) {
+                                    this.map.setBlock(x, y, z, this.selectedBlockType, this.assetManager.getMaterial(this.selectedBlockType));
+                                    Game.debug(`Placed block (${this.selectedBlockType}) at: x=${x}, y=${y}, z=${z}`);
+                                }
+                            }
+                        } else {
+                            Game.debug('No block hit by raycaster');
+                        }
+                    });
+                    document.addEventListener('click', (e) => {
+                        if (!Game.isRunning || e.target !== Game.renderer.domElement) return;
+                        Game.renderer.domElement.requestPointerLock();
+                    });
+                    document.addEventListener('pointerlockchange', () => {
+                        if (!Game.isRunning) return;
+                        Game.ui.setDebugText(document.pointerLockElement === Game.renderer.domElement
+                            ? 'Pointer locked - Use WASD to move'
+                            : 'Click to lock pointer');
+                    });
+                    document.addEventListener('mousemove', (e) => {
+                        if (!Game.isRunning || document.pointerLockElement !== Game.renderer.domElement) return;
+                        this.player.updateRotation(e, Game.debug);
+                    });
+                }
+
+                /**
+                 * Updates block highlighting.
+                 */
+                updateBlockHighlight() {
+                    if (this.currentOutline) {
+                        this.scene.remove(this.currentOutline);
+                        this.currentOutline = null;
+                    }
+                    this.raycaster.setFromCamera(this.mouse, this.player.camera);
+                    const intersects = this.raycaster.intersectObjects(Object.values(this.map.blocks).map(b => b.mesh));
+                    if (intersects.length > 0) {
+                        const pos = intersects[0].object.position;
+                        const geometry = new THREE.BoxGeometry(1.01, 1.01, 1.01);
+                        this.currentOutline = new THREE.Mesh(geometry, this.assetManager.materials.outline);
+                        this.currentOutline.position.copy(pos);
+                        this.scene.add(this.currentOutline);
+                    }
+                }
+
+                /**
+                 * Sets the selected block type.
+                 * @param {string} type - Block type.
+                 */
+                setBlockType(type) {
+                    this.selectedBlockType = type;
+                    Game.debug(`Block type changed to: ${type}`);
+                }
+            }
+
+            /**
+             * Manages UI elements.
+             */
+            class UI {
+                constructor() {
+                    this.startScreen = document.getElementById('start-screen');
+                    this.inGameUI = document.getElementById('in-game-ui');
+                    this.debugText = document.getElementById('debug');
+                    this.debugPanel = document.getElementById('debug-panel');
+                    this.crosshair = document.getElementById('crosshair');
+                    this.startButton = document.getElementById('start-button');
+                    this.exitButton = document.getElementById('exit-button');
+                    this.blockTypeSelect = document.getElementById('block-type-select');
+                    this.debugMessages = [];
+                }
+
+                /**
+                 * Initializes UI event listeners.
+                 * @param {function} startCallback - Callback for start button.
+                 * @param {function} exitCallback - Callback for exit button.
+                 * @param {function} blockTypeCallback - Callback for block type change.
+                 */
+                init(startCallback, exitCallback, blockTypeCallback) {
+                    this.startButton.addEventListener('click', startCallback);
+                    this.exitButton.addEventListener('click', exitCallback);
+                    this.blockTypeSelect.addEventListener('change', (e) => blockTypeCallback(e.target.value));
+                }
+
+                /**
+                 * Shows the start screen.
+                 */
+                showStartScreen() {
+                    this.startScreen.style.display = 'flex';
+                    Game.renderer.domElement.style.display = 'none';
+                    this.crosshair.style.display = 'none';
+                    this.debugText.style.display = 'none';
+                    this.debugPanel.style.display = 'none';
+                    this.inGameUI.style.display = 'none';
+                }
+
+                /**
+                 * Shows the in-game UI.
+                 */
+                showInGameUI() {
+                    this.startScreen.style.display = 'none';
+                    Game.renderer.domElement.style.display = 'block';
+                    this.crosshair.style.display = 'block';
+                    this.debugText.style.display = 'block';
+                    this.debugPanel.style.display = 'block';
+                    this.inGameUI.style.display = 'block';
+                }
+
+                /**
+                 * Sets the debug text.
+                 * @param {string} text - Text to display.
+                 */
+                setDebugText(text) {
+                    this.debugText.textContent = text;
+                }
+
+                /**
+                 * Updates the debug panel.
+                 * @param {string} message - Debug message to add.
+                 */
+                updateDebugPanel(message) {
+                    this.debugMessages.push(message);
+                    if (this.debugMessages.length > 5) this.debugMessages.shift();
+                    let debugText = '';
+                    if (Game.player) {
+                        const pitchDeg = (Game.player.currentRotation.x * 180 / Math.PI).toFixed(1);
+                        const yawDeg = (Game.player.currentRotation.y * 180 / Math.PI).toFixed(1);
+                        debugText += `Player: x=${Game.player.position.x.toFixed(2)}, y=${Game.player.position.y.toFixed(2)}, z=${Game.player.position.z.toFixed(2)}\n`;
+                        debugText += `Camera: pitch=${pitchDeg}°, yaw=${yawDeg}°\n`;
+                    } else {
+                        debugText += `Player: Not initialized\nCamera: Not initialized\n`;
+                    }
+                    if (Game.npcs && Game.npcs.length > 0) {
+                        Game.npcs.forEach((npc, index) => {
+                            debugText += `NPC ${index}: x=${npc.position.x.toFixed(2)}, z=${npc.position.z.toFixed(2)}\n`;
+                        });
+                    } else {
+                        debugText += `NPCs: None\n`;
+                    }
+                    debugText += '\nLogs:\n' + this.debugMessages.join('\n');
+                    this.debugPanel.innerHTML = debugText;
+                }
+            }
+
+            /**
+             * Main game class.
+             */
+            class Game {
+                static isRunning = false;
+                static scene = new THREE.Scene();
+                static camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                static renderer = new THREE.WebGLRenderer();
+                static player = null;
+                static npcs = [];
+                static map = null;
+                static control = null;
+                static ui = null;
+                static assetManager = null;
+                static pointLight = null;
+                static animationFrameId = null;
+
+                /**
+                 * Initializes the game.
+                 */
+                static init() {
+                    // Initialize UI, player, and map first to ensure debug calls work
+                    this.ui = new UI();
+                    this.player = new Player(8, 3.5, 8, this.camera);
+                    this.map = new Map(16);
+                    this.ui.init(
+                        this.start.bind(this),
+                        this.exit.bind(this),
+                        this.control ? this.control.setBlockType.bind(this.control) : () => { }
+                    );
+
+                    this.renderer.setSize(window.innerWidth, window.innerHeight);
+                    this.renderer.shadowMap.enabled = true;
+                    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                    document.body.appendChild(this.renderer.domElement);
+
+                    const ambientLight = new THREE.AmbientLight(0x606060);
+                    this.scene.add(ambientLight);
+                    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                    directionalLight.position.set(10, 20, 10);
+                    directionalLight.castShadow = true;
+                    directionalLight.shadow.mapSize.set(1024, 1024);
+                    directionalLight.shadow.camera.near = 0.5;
+                    directionalLight.shadow.camera.far = 50;
+                    directionalLight.shadow.camera.left = -20;
+                    directionalLight.shadow.camera.right = 20;
+                    directionalLight.shadow.camera.top = 20;
+                    directionalLight.shadow.camera.bottom = -20;
+                    this.scene.add(directionalLight);
+                    this.pointLight = new THREE.PointLight(0xffffff, 0.3, 10);
+                    this.scene.add(this.pointLight);
+                    this.debug('Lighting initialized: Ambient(0x606060), Directional(0xffffff, 0.8), Point(0xffffff, 0.3)');
+
+                    this.assetManager = new AssetManager();
+                    this.assetManager.loadAssets(this.debug.bind(this)).catch(err => {
+                        this.debug(`Failed to load assets: ${err.message}`);
+                    });
+
+                    this.map.init(this.scene);
+
+                    this.control = new Control(this.player, this.map, this.scene, this.assetManager);
+                    // Re-bind UI block type callback after control is initialized
+                    this.ui.blockTypeSelect.addEventListener('change', (e) => this.control.setBlockType(e.target.value));
+
+                    window.addEventListener('resize', () => {
+                        this.camera.aspect = window.innerWidth / window.innerHeight;
+                        this.camera.updateProjectionMatrix();
+                        this.renderer.setSize(window.innerWidth, window.innerHeight);
+                    });
+                }
+
+                /**
+                 * Logs a debug message.
+                 * @param {string} msg - Message to log.
+                 */
+                static debug(msg) {
+                    this.ui.updateDebugPanel(msg);
+                }
+
+                /**
+                 * Starts the game.
+                 */
+                static async start() {
+                    if (!this.assetManager.texturesLoaded) {
+                        this.debug('Waiting for textures to load...');
+                        try {
+                            await this.assetManager.loadAssets(this.debug.bind(this));
+                        } catch (err) {
+                            this.debug(`Failed to start game: ${err.message}`);
+                            return;
+                        }
+                    }
+                    this.isRunning = true;
+                    this.ui.showInGameUI();
+                    this.map.initTerrain(this.assetManager);
+                    this.npcs.length = 0;
+                    for (let i = 0; i < 3; i++) {
+                        const x = Math.floor(Math.random() * (this.map.size - 2)) + 1;
+                        const z = Math.floor(Math.random() * (this.map.size - 2)) + 1;
+                        const npc = new NPC(x, z, this.scene, this.assetManager.materials.npc);
+                        this.npcs.push(npc);
+                        this.debug(`NPC ${this.npcs.length - 1} created at: x=${x}, y=1, z=${z}`);
+                    }
+                    this.player.position.set(8, 3.5, 8);
+                    this.player.targetRotation.x = 0;
+                    this.player.targetRotation.y = 0;
+                    this.player.currentRotation.x = 0;
+                    this.player.currentRotation.y = 0;
+                    this.camera.position.copy(this.player.position);
+                    this.pointLight.position.set(this.player.position.x, this.player.position.y + 0.5, this.player.position.z);
+                    this.debug('Game started');
+                    this.animate();
+                }
+
+                /**
+                 * Exits the game.
+                 */
+                static exit() {
+                    this.isRunning = false;
+                    cancelAnimationFrame(this.animationFrameId);
+                    this.ui.showStartScreen();
+                    this.map.clear();
+                    this.npcs.forEach(npc => npc.remove(this.scene));
+                    this.npcs.length = 0;
+                    this.player.position.set(8, 3.5, 8);
+                    this.player.velocity.set(0, 0, 0);
+                    this.debug('Game exited');
+                }
+
+                /**
+                 * Main animation loop.
+                 */
+                static animate() {
+                    if (!this.isRunning) return;
+                    this.animationFrameId = requestAnimationFrame(this.animate.bind(this));
+
+                    this.player.update(this.map, this.control.keys, this.debug.bind(this));
+                    this.npcs.forEach((npc, index) => npc.update(this.map, this.map.size, msg => this.debug(`NPC ${index}: ${msg}`)));
+                    this.pointLight.position.set(this.player.position.x, this.player.position.y + 0.5, this.player.position.z);
+                    this.control.updateBlockHighlight();
+                    try {
+                        this.renderer.render(this.scene, this.camera);
+                    } catch (err) {
+                        this.debug(`Render error: ${err.message}`);
+                        console.error('Render error details:', err);
+                    }
+                }
+            }
+
+            // Initialize and show start screen
+            Game.init();
+            Game.ui.showStartScreen();
+        });
+    </script>
+</body>
+
+</html>
