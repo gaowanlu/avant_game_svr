@@ -1,4 +1,11 @@
 {
   "name": "freeland",
-  "main": "main.js"
+  "main": "main.js",
+  "dependencies": {
+    "three": "^0.178.0"
+  },
+  "devDependencies": {
+    "webpack": "^5.100.2",
+    "webpack-cli": "^6.0.1"
+  }
 }

@@ -1,3 +1,11 @@
-# MC Like Client
+# Freeland
 
-MC like, three.js client.
+MC like, Game Client.
+
+[NW.js](https://nwjs.io/)
+
+```
+npm install
+npx webpack
+nw.exe ./
+```
