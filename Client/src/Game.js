@@ -1,10 +1,12 @@
 const THREE = require('three');
+const { Sky } = require('three/examples/jsm/objects/Sky.js');
 const UI = require('./UI');
 const Player = require('./Player');
 const Map = require('./Map');
 const AssetManager = require('./AssetManager');
 const Control = require('./Control');
 const Npc = require('./Npc');
+const Network = require('./Network');
 
 class Game {
     static isRunning = false;
@@ -19,6 +21,12 @@ class Game {
     static assetManager = null;
     static pointLight = null;
     static animationFrameId = null;
+    // 记录上一帧时间
+    static lastTime = performance.now();
+
+    static network = null;
+    static svrHost = "www.mfavant.xyz";
+    static svrPort = 443;
 
     static debug(msg) {
         this.ui.updateDebugPanel(msg);
@@ -43,8 +51,27 @@ class Game {
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.body.appendChild(this.renderer.domElement);
 
-        // 场景中加入光照
+        // Inside your Game class init method, replace the sky and lighting block with this
         {
+            const sky = new Sky();
+            sky.scale.setScalar(10000); // Large scale to cover the scene
+            this.scene.add(sky);
+
+            // Configure sky parameters for a deeper blue and less white horizon
+            const uniforms = sky.material.uniforms;
+            uniforms['turbidity'].value = 2; // Reduced for less haze
+            uniforms['rayleigh'].value = 3; // Increased for deeper blue
+            uniforms['mieCoefficient'].value = 0.01; // Adjusted for balanced scattering
+            uniforms['mieDirectionalG'].value = 0.7; // Reduced to soften sun halo
+
+            // Set sun position to match directional light
+            const sun = new THREE.Vector3();
+            const phi = THREE.MathUtils.degToRad(90 - 20); // Match directional light angle
+            const theta = THREE.MathUtils.degToRad(45); // Arbitrary azimuth
+            sun.setFromSphericalCoords(1, phi, theta);
+            uniforms['sunPosition'].value.copy(sun);
+
+            // Existing lighting code
             const ambientLight = new THREE.AmbientLight(0x606060);
             this.scene.add(ambientLight);
             const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
@@ -60,7 +87,7 @@ class Game {
             this.scene.add(directionalLight);
             this.pointLight = new THREE.PointLight(0xffffff, 0.3, 10);
             this.scene.add(this.pointLight);
-            this.debug('Lighting initialized: Ambient(0x606060), Directional(0xffffff, 0.8), Point(0xffffff, 0.3)');
+            this.debug('Lighting and sky initialized: Ambient(0x606060), Directional(0xffffff, 0.8), Point(0xffffff, 0.3), Sky(deep blue)');
         }
 
         // 资源管理器
@@ -88,6 +115,9 @@ class Game {
 
         // 游戏开始直接显示开始界面
         this.ui.showStartScreen();
+
+        this.network = new Network(this.svrHost, this.svrPort);
+        this.network.connect();
     };
 
     // 玩家点击UI 开始按钮回调
@@ -133,6 +163,7 @@ class Game {
         this.debug('Game started');
 
         // 开始主循环
+        this.lastTime = performance.now(); // 重置时间
         this.mainLoop();
     }
 
@@ -154,6 +185,11 @@ class Game {
         if (!this.isRunning) return;
         this.animationFrameId = requestAnimationFrame(this.mainLoop.bind(this));
 
+        // 计算时间步长秒
+        const currentTime = performance.now();
+        const deltaTime = (currentTime - this.lastTime) / 1000; // 毫秒转为秒
+        this.lastTime = currentTime;
+
         this.player.update(this.map, this.control.keys, this.debug.bind(this));
         this.npcs.forEach((npc, index) => npc.update(this.map, this.map.size, msg => this.debug(`NPC ${index}: ${msg}`)));
         this.pointLight.position.set(this.player.position.x, this.player.position.y + 0.5, this.player.position.z);
@@ -164,6 +200,9 @@ class Game {
             this.debug(`Render error: ${err.message}`);
             console.error('Render error details:', err);
         }
+
+        // 调试帧率
+        this.debug(`Frame time: ${(deltaTime * 1000).toFixed(2)}ms, FPS: ${(1 / deltaTime).toFixed(1)}`);
     }
 
 };

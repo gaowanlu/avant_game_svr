@@ -1,6 +1,9 @@
 {
   "name": "freeland",
   "main": "main.js",
+  "window": {
+    "toolbar": true
+  },
   "dependencies": {
     "three": "^0.178.0"
   },

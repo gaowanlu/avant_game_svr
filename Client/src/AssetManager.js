@@ -19,6 +19,7 @@ class AssetManager {
             DIRT_TERRAIN: 'DirtTerrain',
             TEXTURED_GRASS: 'TexturedGrass',
             TEXTURED_DIRT: 'TexturedDirt',
+            TEXTURED_STONE: 'TexturedStone',
             OUTLINE: 'Outline',
             NPC: 'NPC'
         };
@@ -72,6 +73,7 @@ class AssetManager {
         this.materials[this.materialNameMacro.DIRT_TERRAIN] = new THREE.MeshLambertMaterial({ color: 0x8b4513 });
         this.materials[this.materialNameMacro.TEXTURED_GRASS] = new THREE.MeshLambertMaterial({ map: this.textures[this.textureNameMacro.GRASS_SIDE] });
         this.materials[this.materialNameMacro.TEXTURED_DIRT] = new THREE.MeshLambertMaterial({ map: this.textures[this.textureNameMacro.DIRT] });
+        this.materials[this.materialNameMacro.TEXTURED_STONE] = new THREE.MeshLambertMaterial({ map: this.textures[this.textureNameMacro.GRASS_TOP] });
         this.materials[this.materialNameMacro.OUTLINE] = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true });
         this.materials[this.materialNameMacro.NPC] = new THREE.LineBasicMaterial({ color: 0xff0000 });
     }
