@@ -1,5 +1,6 @@
 const Macro = require("../base/Macro");
 const THREE = require('three');
+const GameSystem = require("./GameSystem");
 
 class AssetSystem {
     constructor() {
@@ -10,7 +11,11 @@ class AssetSystem {
         this.texturesLoaded = false;
     }
 
-    loadAssets(debugCallbackFunc) {
+    isLoadedOK() {
+        return this.texturesLoaded;
+    }
+
+    loadAssets() {
         return new Promise((resolve, reject) => {
             let loadedCount = 0;
 
@@ -21,18 +26,18 @@ class AssetSystem {
             ];
 
             const onLoad = (textureName, texture) => {
-                debugCallbackFunc(`${textureName} texture loaded`);
+                GameSystem.debugMsg(`${textureName} texture loaded`);
                 loadedCount++;
                 if (loadedCount === resources.length) {
                     this.texturesLoaded = true;
                     // 当textxture加载完成后，开始初始化材质
-                    this.initializeMaterials(debugCallbackFunc);
+                    this.initializeMaterials();
                     resolve();
                 }
             };
 
             const onError = (textureName, error) => {
-                debugCallbackFunc(`Error loading ${textureName} texture: ${err.message}`);
+                GameSystem.debugMsg(`Error loading ${textureName} texture: ${err.message}`);
                 reject(err);
             };
 
@@ -53,7 +58,7 @@ class AssetSystem {
         });
     }
 
-    initializeMaterials(debugCallbackFunc) {
+    initializeMaterials() {
         this.materials[Macro.materialNameMacro.GRASS_TERRAIN] = new THREE.MeshLambertMaterial({ color: 0x4CAF50 });
         this.materials[Macro.materialNameMacro.DIRT_TERRAIN] = new THREE.MeshLambertMaterial({ color: 0x8b4513 });
         this.materials[Macro.materialNameMacro.TEXTURED_GRASS] = new THREE.MeshLambertMaterial({ map: this.textures[Macro.textureNameMacro.GRASS_SIDE] });

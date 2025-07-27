@@ -12,6 +12,10 @@ class Map extends Entity {
         this.threeScene = null;
     }
 
+    destroy() {
+        super.destroy();
+    }
+
     // 初始化地图传入Three.js场景
     init(scene) {
         this.threeScene = scene;

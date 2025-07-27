@@ -1,5 +1,3 @@
-const GameSystemInstance = require("./GameSystem");
-
 class UISystem {
     constructor() {
         this.startScreen = document.getElementById('freeland-start-screen');
@@ -13,9 +11,10 @@ class UISystem {
         this.debugMessages = [];
     }
 
-    init(startGameCallbackFunc, exitGameCallbackFunc) {
-        this.startButton.addEventListener('click', startGameCallbackFunc);
-        this.exitButton.addEventListener('click', exitGameCallbackFunc);
+    init() {
+        // 派发事件
+        // this.startButton.addEventListener('click', startGameCallbackFunc);
+        // this.exitButton.addEventListener('click', exitGameCallbackFunc);
     }
 
     bindPlayBlockTypeSelectChange(playBlockTypeCallbackFunc) {

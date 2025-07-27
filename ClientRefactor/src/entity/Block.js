@@ -4,7 +4,8 @@ const PositionCmpt = require("../component/PositionCmpt");
 class Block extends Entity {
     constructor(x, y, z, blockType, material) {
         super();
-        super.addComponent(new PositionCmpt());
+        this.positionCmpt = new PositionCmpt(x, y, z);
+        super.addComponent(this.positionCmpt);
         this.blockType = blockType;
         this.material = material;
 
@@ -17,6 +18,10 @@ class Block extends Entity {
         this.mesh.castShadow = true;
         // 使该方块能够接收其他对象投射的阴影
         this.mesh.receiveShadow = true;
+    }
+
+    destroy() {
+        super.destroy();
     }
 
     addToScene(scene) {

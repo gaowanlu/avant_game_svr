@@ -1,6 +1,5 @@
 class EntityManager {
     constructor() {
-        this.entities = new Map();
         this.nextEntityId = 0;
     }
 
@@ -9,20 +8,7 @@ class EntityManager {
 
         entity.entityId = entityId;
 
-        this.entities.set(entityId, entity);
         return entityId;
-    }
-
-    getEntity(entityId) {
-        return this.entities.get(entityId) || null;
-    }
-
-    removeEntity(entityId) {
-        this.entities.delete(entityId);
-    }
-
-    getEntitiesWithComponent(componentType) {
-        return Array.from(this.entities.values()).filter(entity => entity.hasComponent(componentType));
     }
 }
 

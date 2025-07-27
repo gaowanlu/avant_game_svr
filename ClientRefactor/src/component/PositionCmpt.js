@@ -22,6 +22,18 @@ class PositionCmpt extends Component {
     getZ() {
         return this.position.z;
     }
+
+    setX(x) {
+        this.position.x = x;
+    }
+
+    setY(y) {
+        this.position.y = y;
+    }
+
+    setZ(z) {
+        this.position.z = z;
+    }
 };
 
 module.exports = PositionCmpt;
