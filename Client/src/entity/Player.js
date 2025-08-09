@@ -28,6 +28,25 @@ class Player extends Entity {
         this.mouseSensitivity = 0.002;
         // 设置相机位置
         this.cameraCmpt.setPosition(this.positionCmpt.getThreePosition());
+        UpdateCameraPositionToPlayerPosition();
+    }
+
+    setPosition(x, y, z) {
+        this.positionCmpt.getThreePosition().set(x, y, z);
+    }
+
+    setTargetRotation(x, y) {
+        this.targetRotation.x = x;
+        this.targetRotation.y = y;
+    }
+
+    setCurrentRotation(x, y) {
+        this.currentRotation.x = x;
+        this.currentRotation.y = y;
+    }
+
+    UpdateCameraPositionToPlayerPosition() {
+        this.cameraCmpt.setPosition(this.positionCmpt.getThreePosition());
     }
 
     destroy() {

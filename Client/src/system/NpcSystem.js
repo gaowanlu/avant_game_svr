@@ -8,8 +8,8 @@ class NpcSystem {
 
     }
 
-    OnMapStart() {
-        // this.npcs.length = 0;
+    OnGameStart() {
+        this.npcs.length = 0;
         // for (let i = 0; i < 3; i++) {
         //     const x = Math.floor(Math.random() * (this.map.size - 2)) + 1;
         //     const z = Math.floor(Math.random() * (this.map.size - 2)) + 1;
@@ -17,6 +17,15 @@ class NpcSystem {
         //     this.npcs.push(npc);
         //     this.debug(`NPC ${this.npcs.length - 1} created at: x=${x}, y=1, z=${z}`);
         // }
+    }
+
+    OnGameExit() {
+        // this.npcs.forEach(npc => npc.remove(this.scene));
+        // this.npcs.length = 0;
+    }
+
+    OnMainLoop() {
+        // this.npcs.forEach((npc, index) => npc.update(this.map, this.map.size, msg => this.debug(`NPC ${index}: ${msg}`)));
     }
 };
 

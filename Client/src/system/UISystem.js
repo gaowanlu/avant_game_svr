@@ -30,6 +30,14 @@ class UISystem {
         this.inGameUI.style.display = 'none';
     }
 
+    OnGameStart() {
+        this.showInGameUI();
+    }
+
+    OnGameExit() {
+        this.showStartScreen();
+    }
+
     showInGameUI() {
         this.startScreen.style.display = 'none';
         this.Game.renderer.domElement.style.display = 'block';

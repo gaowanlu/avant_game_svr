@@ -1,20 +1,5 @@
-const THREE = require('three');
-
-// 定义 Control 类，负责处理玩家输入、交互和方块高亮
-class Control {
-    // 初始化控制相关的属性和事件监听器
-    // 参数：Game（游戏主对象），player（玩家对象），map（地图对象），scene（Three.js 场景），assetManager（资源管理器）
-    constructor(Game, player, map, scene, assetManager) {
-        // 保存游戏主对象，用于访问游戏状态和调试方法
-        this.Game = Game;
-        // 保存玩家对象，用于更新玩家旋转和位置
-        this.player = player;
-        // 保存地图对象，用于方块的查询、添加和移除
-        this.map = map;
-        // 保存 Three.js 场景，用于添加/移除高亮模型
-        this.scene = scene;
-        // 保存资源管理器，用于获取方块材质
-        this.assetManager = assetManager;
+class ControlSystem {
+    constructor() {
         // 初始化键盘输入状态对象，记录按下的键（键码: true/false）
         this.keys = {};
         // 创建 Three.js Raycaster 对象，用于射线检测（检测玩家视角与方块的交点）
@@ -28,16 +13,31 @@ class Control {
         // 初始化破坏状态为 false，表示当前未在破坏方块
         this.isBreaking = false;
         // 设置默认选择的方块类型为 'dirt'（泥土）
-        this.selectedBlockType = this.assetManager.materialNameMacro.TEXTURED_GRASS;
-        // 设置事件监听器，处理键盘、鼠标等输入
-        this.setupEventListeners();
+
+        // this.selectedBlockType = this.assetManager.materialNameMacro.TEXTURED_GRASS;
+        // // 设置事件监听器，处理键盘、鼠标等输入
+        // this.setupEventListeners();
     }
 
-    // 方法：设置当前选择的方块类型
-    // 参数：type（方块类型字符串，如 'dirt'）
+    init() {
+
+    }
+
+    OnGameStart() {
+
+    }
+
+    OnGameExit() {
+
+    }
+
+    OnMainLoop() {
+        // this.control.updateBlockHighlight();
+    }
+
     setBlockType(type) {
-        this.selectedBlockType = type;
-        this.Game.debug(`Block type changed to: ${type}`);
+        // this.selectedBlockType = type;
+        // this.Game.debug(`Block type changed to: ${type}`);
     }
 
     // 方法：设置事件监听器，处理键盘、鼠标输入和指针锁定
@@ -172,4 +172,6 @@ class Control {
     }
 };
 
-module.exports = Control;
+const ControlSystemInstance = new ControlSystem();
+
+module.exports = ControlSystemInstance;

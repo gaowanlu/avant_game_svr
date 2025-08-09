@@ -66,7 +66,25 @@ class MapSystem {
     // OnGameStart
     OnGameStart() {
         this.map.initTerrain();
-        NpcSystem.OnMapStart();
+    }
+
+    OnGameExit() {
+
+    }
+
+    OnMainLoop() {
+        // this.pointLight.position.set(this.player.position.x, this.player.position.y + 0.5, this.player.position.z);
+
+        // try {
+        //     this.renderer.render(this.scene, this.camera);
+        // } catch (err) {
+        //     this.debug(`Render error: ${err.message}`);
+        //     console.error('Render error details:', err);
+        // }
+    }
+
+    SetPointLightPosition(x, y, z) {
+        this.pointLight.position.set(x, y, z);
     }
 };
 
