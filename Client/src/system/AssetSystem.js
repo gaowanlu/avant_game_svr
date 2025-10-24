@@ -26,7 +26,7 @@ class AssetSystem {
             ];
 
             const onLoad = (textureName, texture) => {
-                GameSystem.debugMsg(`${textureName} texture loaded`);
+                console.log(`${textureName} texture loaded`);
                 loadedCount++;
                 if (loadedCount === resources.length) {
                     this.texturesLoaded = true;
@@ -37,7 +37,7 @@ class AssetSystem {
             };
 
             const onError = (textureName, error) => {
-                GameSystem.debugMsg(`Error loading ${textureName} texture: ${err.message}`);
+                console.log(`Error loading ${textureName} texture: ${err.message}`);
                 reject(err);
             };
 

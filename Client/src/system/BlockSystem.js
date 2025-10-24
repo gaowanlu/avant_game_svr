@@ -3,7 +3,7 @@ class BlockSystem {
     }
 
     init() {
-
+        console.log("BlockSystem.init()");
     }
 
     OnGameStart() {

@@ -1,13 +1,23 @@
 const GameSystemInstance = require("./system/GameSystem");
 
-const Freeland = {};
+const Freeland = {
+    version: 'v0.0.1'
+};
+
+Freeland.ConsoleVersion = function () {
+    console.log(`Freeland Version: ${this.version}`);
+}
 
 Freeland.OnDOMContentLoaded = function () {
-    console.log("DOMContentLoaded");
+    // console.log("DOMContentLoaded");
+    this.ConsoleVersion();
 
+    // 游戏系统实例初始化
     GameSystemInstance.init();
 }
 
-window.addEventListener('DOMContentLoaded', () => Freeland.OnDOMContentLoaded(), false);
+window.addEventListener('DOMContentLoaded', () => {
+    Freeland.OnDOMContentLoaded()
+}, false);
 
 module.exports = Freeland;

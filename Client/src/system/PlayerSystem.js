@@ -5,6 +5,7 @@ class PlayerSystem {
         this.player = null;
     }
     init(camera) {
+        console.log("PlayerSystem.init()");
         this.player = new Player(8, 3.5, 8, camera);
     }
 

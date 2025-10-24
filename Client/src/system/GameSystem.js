@@ -8,40 +8,51 @@ const ControlSystem = require("./ControlSystem");
 const NpcSystem = require("./NpcSystem");
 const BlockSystem = require("./BlockSystem");
 const Network = require("../base/Network");
+const BaseConfig = require("../config/BaseConfig");
 
 class GameSystem {
     constructor() {
+        // 是否在运行中标记
         this.isRunning = false;
-
+        // 帧ID
         this.animationFrameId = null;
         // 记录上一帧时间
         this.lastTime = performance.now();
-        this.network = null;
-        this.svrHost = "www.mfavant.xyz";
-        this.svrPort = 443;
-    }
 
-    debugMsg(msg) {
-        UISystem.updateDebugPanel(msg);
+        // 网络
+        this.network = new Network(BaseConfig.svrHost, BaseConfig.svrPort);
     }
 
     init() {
-        UISystem.init();
-        PlayerSystem.init(this.camera);
+        // 网络初始化
+        this.network.connect();
+        // UI初始化
+        UISystem.init(() => {
+            this.OnStart();
+        }, () => {
+            this.OnExit();
+        });
+        UISystem.showStartScreen();
+
+        // 地图场景系统初始化
         MapSystem.init();
+
+        // 玩家角色系统初始化
+        PlayerSystem.init(MapSystem.getCamera());
+
+        // 砖块系统初始化
         BlockSystem.init();
+
+        // Npc小人系统初始化
         NpcSystem.init();
+
+        // 素材系统初始化
         AssetSystem.loadAssets().catch(err => {
-            this.debugMsg(`Failed to load assets: ${err.message}`);
+            console.error(`Failed to load assets: ${err.message}`);
         });
 
+        // 控制系统初始化
         ControlSystem.init();
-
-        this.windowEventInit();
-
-        UISystem.showStartScreen();
-        this.network = new Network(this.svrHost, this.svrPort);
-        this.network.connect();
     }
 
     setIsRunning(val) {
@@ -61,49 +72,40 @@ class GameSystem {
         this.setIsRunning(true);
 
         // 显示局内UI
-        UISystem.OnGameStart();
-        MapSystem.OnGameStart();
-        BlockSystem.OnGameStart();
-        NpcSystem.OnGameStart();
-        PlayerSystem.OnGameStart();
-        MapSystem.SetPointLightPosition(PlayerSystem.GetPlayerPosition().x,
-            PlayerSystem.GetPlayerPosition().y + 0.5,
-            PlayerSystem.GetPlayerPosition().z);
-        ControlSystem.OnGameStart();
+        // UISystem.OnGameStart();
+        // MapSystem.OnGameStart();
+        // BlockSystem.OnGameStart();
+        // NpcSystem.OnGameStart();
+        // PlayerSystem.OnGameStart();
+        // MapSystem.SetPointLightPosition(PlayerSystem.GetPlayerPosition().x,
+        //     PlayerSystem.GetPlayerPosition().y + 0.5,
+        //     PlayerSystem.GetPlayerPosition().z);
+        // ControlSystem.OnGameStart();
 
         // 开始主循环
         this.lastTime = performance.now();
         this.mainLoop();
     }
 
-    windowEventInit() {
-        // 窗口大小改变
-        window.addEventListener('resize', () => {
-            // this.camera.aspect = window.innerWidth / window.innerHeight;
-            // this.camera.updateProjectionMatrix();
-            // this.renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-    }
-
     // 玩家点UI 结束退出按钮回调
-    static async OnExit() {
-        setIsRunning(false);
-        cancelAnimationFrame(this.animationFrameId);
+    async OnExit() {
+        console.log('Game OnExit');
+        this.setIsRunning(false);
 
-        UISystem.OnGameExit();
-        MapSystem.OnGameExit();
-        BlockSystem.OnGameExit();
+        // cancelAnimationFrame(this.animationFrameId);
 
-        NpcSystem.OnGameExit();
-        PlayerSystem.OnGameExit();
-        ControlSystem.OnGameExit();
+        // UISystem.OnGameExit();
+        // MapSystem.OnGameExit();
+        // BlockSystem.OnGameExit();
 
-        console.debug('Game OnExit');
+        // NpcSystem.OnGameExit();
+        // PlayerSystem.OnGameExit();
+        // ControlSystem.OnGameExit();
     }
 
-    static async mainLoop() {
+    async mainLoop() {
         if (!this.isRunning) {
-            console.debug("!this.isRunning");
+            console.log("!this.isRunning");
             return;
         }
 
@@ -114,13 +116,13 @@ class GameSystem {
         const deltaTime = (currentTime - this.lastTime) / 1000; // 毫秒转为秒
         this.lastTime = currentTime;
 
-        PlayerSystem.OnMainLoop();
-        NpcSystem.OnMainLoop();
-        MapSystem.OnMainLoop();
-        ControlSystem.OnMainLoop();
+        // PlayerSystem.OnMainLoop();
+        // NpcSystem.OnMainLoop();
+        // MapSystem.OnMainLoop();
+        // ControlSystem.OnMainLoop();
 
         // 调试帧率
-        this.debug(`Frame time: ${(deltaTime * 1000).toFixed(2)}ms, FPS: ${(1 / deltaTime).toFixed(1)}`);
+        console.log(`Frame time: ${(deltaTime * 1000).toFixed(2)}ms, FPS: ${(1 / deltaTime).toFixed(1)}`);
     }
 };
 

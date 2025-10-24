@@ -1,3 +1,5 @@
+const THREE = require('three');
+
 class ControlSystem {
     constructor() {
         // 初始化键盘输入状态对象，记录按下的键（键码: true/false）
@@ -20,7 +22,7 @@ class ControlSystem {
     }
 
     init() {
-
+        console.log("ControlSystem.init()");
     }
 
     OnGameStart() {

@@ -5,7 +5,7 @@ class NpcSystem {
         this.npcs = [];
     }
     init() {
-
+        console.log("NpcSystem.init()");
     }
 
     OnGameStart() {

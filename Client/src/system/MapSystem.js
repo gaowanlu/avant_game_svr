@@ -1,7 +1,7 @@
 const Map = require("../entity/Map");
 const { Sky } = require('three/examples/jsm/objects/Sky.js');
 const GameSystem = require("./GameSystem");
-const NpcSystem = require("./NpcSystem");
+const THREE = require('three');
 
 class MapSystem {
     constructor() {
@@ -13,6 +13,7 @@ class MapSystem {
     }
 
     init() {
+        console.log("MapSystem.init()");
         this.map = new Map(16);
 
         // 初始化渲染器
@@ -56,7 +57,7 @@ class MapSystem {
             this.scene.add(directionalLight);
             this.pointLight = new THREE.PointLight(0xffffff, 0.3, 10);
             this.scene.add(this.pointLight);
-            GameSystem.debugMsg('Lighting and sky initialized: Ambient(0x606060), Directional(0xffffff, 0.8), Point(0xffffff, 0.3), Sky(deep blue)');
+            console.log('Lighting and sky initialized: Ambient(0x606060), Directional(0xffffff, 0.8), Point(0xffffff, 0.3), Sky(deep blue)');
         }
 
         // 将场景绑定到地图对象
@@ -83,8 +84,13 @@ class MapSystem {
         // }
     }
 
+    getCamera() {
+        return this.camera;
+    }
+
     SetPointLightPosition(x, y, z) {
-        this.pointLight.position.set(x, y, z);
+        console.log(`SetPointLightPosition ${x} ${y} ${z}`);
+        // this.pointLight.position.set(x, y, z);
     }
 };
 
