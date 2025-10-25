@@ -36,11 +36,14 @@ class PlayerSystem {
     }
 
     OnGameExit() {
+        console.log("PlayerSystem.OnGameExit()");
         // this.player.position.set(8, 3.5, 8);
         // this.player.velocity.set(0, 0, 0);
     }
 
     OnMainLoop() {
+        console.log("PlayerSystem.OnMainLoop()");
+
         // this.player.update(this.map, this.control.keys, this.debug.bind(this));
     }
 };

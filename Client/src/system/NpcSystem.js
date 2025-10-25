@@ -21,11 +21,14 @@ class NpcSystem {
     }
 
     OnGameExit() {
+        console.log("NpcSystem.OnGameExit()");
+
         // this.npcs.forEach(npc => npc.remove(this.scene));
         // this.npcs.length = 0;
     }
 
     OnMainLoop() {
+        console.log("NpcSystem.OnMainLoop()");
         // this.npcs.forEach((npc, index) => npc.update(this.map, this.map.size, msg => this.debug(`NPC ${index}: ${msg}`)));
     }
 };

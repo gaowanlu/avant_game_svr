@@ -71,10 +71,12 @@ class MapSystem {
     }
 
     OnGameExit() {
-
+        console.log("MapSystem.OnGameExit()");
     }
 
     OnMainLoop(playerPosition) {
+        console.log("MapSystem.OnMainLoop playerPosition:", playerPosition);
+
         // this.pointLight.position.set(this.player.position.x, this.player.position.y + 0.5, this.player.position.z);
 
         // try {

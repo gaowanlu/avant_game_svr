@@ -100,6 +100,10 @@ class UISystem {
         // this.debugPanel.innerHTML = debugText;
     }
 
+    OnMainLoop() {
+        console.log("UISystem.OnMainLoop()");
+    }
+
 };
 
 const UISystemInstance = new UISystem();

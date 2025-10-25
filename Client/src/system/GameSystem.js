@@ -99,17 +99,19 @@ class GameSystem {
     // 玩家点UI 结束退出按钮回调
     async OnExit() {
         console.log('Game OnExit');
+
+        if (this.animationFrameId) {
+            console.log("GameSystem.OnExit cancelAnimationFrame", this.animationFrameId);
+            cancelAnimationFrame(this.animationFrameId);
+            this.animationFrameId = null;
+        }
         this.setIsRunning(false);
 
-        // cancelAnimationFrame(this.animationFrameId);
-
-        // UISystem.OnGameExit();
-        // MapSystem.OnGameExit();
-        // BlockSystem.OnGameExit();
-
-        // NpcSystem.OnGameExit();
-        // PlayerSystem.OnGameExit();
-        // ControlSystem.OnGameExit();
+        MapSystem.OnGameExit();
+        BlockSystem.OnGameExit();
+        PlayerSystem.OnGameExit();
+        NpcSystem.OnGameExit();
+        ControlSystem.OnGameExit();
     }
 
     async mainLoop() {
@@ -125,10 +127,12 @@ class GameSystem {
         const deltaTime = (currentTime - this.lastTime) / 1000; // 毫秒转为秒
         this.lastTime = currentTime;
 
-        // PlayerSystem.OnMainLoop();
-        // NpcSystem.OnMainLoop();
-        // MapSystem.OnMainLoop();
-        // ControlSystem.OnMainLoop();
+        UISystem.OnMainLoop();
+        MapSystem.OnMainLoop(PlayerSystem.GetPlayerPosition());
+        BlockSystem.OnMainLoop();
+        PlayerSystem.OnMainLoop();
+        NpcSystem.OnMainLoop();
+        ControlSystem.OnMainLoop();
 
         // 调试帧率
         console.log(`Frame time: ${(deltaTime * 1000).toFixed(2)}ms, FPS: ${(1 / deltaTime).toFixed(1)}`);

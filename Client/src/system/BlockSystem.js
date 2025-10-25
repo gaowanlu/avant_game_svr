@@ -11,7 +11,12 @@ class BlockSystem {
     }
 
     OnGameExit() {
+        console.log("BlockSystem.OnGameExit()");
         // this.map.clearAllBlocks();
+    }
+
+    OnMainLoop() {
+        console.log("BlockSystem.OnMainLoop()");
     }
 };
 

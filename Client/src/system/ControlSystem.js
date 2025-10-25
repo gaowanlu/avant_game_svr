@@ -30,10 +30,12 @@ class ControlSystem {
     }
 
     OnGameExit() {
-
+        console.log("ControlSystem.OnGameExit()");
     }
 
     OnMainLoop() {
+        console.log("ControlSystem.OnMainLoop()");
+
         // this.control.updateBlockHighlight();
     }
 
