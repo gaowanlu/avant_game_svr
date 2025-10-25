@@ -1,3 +1,4 @@
+const THREE = require("three");
 const Entity = require("../base/Entity");
 const PositionCmpt = require("../component/PositionCmpt");
 

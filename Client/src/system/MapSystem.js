@@ -66,6 +66,7 @@ class MapSystem {
 
     // OnGameStart
     OnGameStart() {
+        console.log("MapSystem.OnGameStart()");
         this.map.initTerrain();
     }
 
@@ -73,7 +74,7 @@ class MapSystem {
 
     }
 
-    OnMainLoop() {
+    OnMainLoop(playerPosition) {
         // this.pointLight.position.set(this.player.position.x, this.player.position.y + 0.5, this.player.position.z);
 
         // try {
@@ -89,8 +90,8 @@ class MapSystem {
     }
 
     SetPointLightPosition(x, y, z) {
-        console.log(`SetPointLightPosition ${x} ${y} ${z}`);
-        // this.pointLight.position.set(x, y, z);
+        console.log(`MapSystem.SetPointLightPosition(${x}, ${y}, ${z})`);
+        this.pointLight.position.set(x, y, z);
     }
 };
 

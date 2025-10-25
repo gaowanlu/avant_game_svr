@@ -10,6 +10,8 @@ class PlayerSystem {
     }
 
     OnGameStart() {
+        console.log("PlayerSystem.OnGameStart()");
+
         // 游戏开始时设置位置玩家参数
         this.player.setPosition(8, 3.5, 8);
         this.player.setTargetRotation(0, 0);
@@ -19,6 +21,18 @@ class PlayerSystem {
 
     GetPlayerPosition() {
         return this.player.positionCmpt.getThreePosition();
+    }
+
+    GetPlayerPositionX() {
+        return this.player.positionCmpt.getThreePosition().x;
+    }
+
+    GetPlayerPositionY() {
+        return this.player.positionCmpt.getThreePosition().y;
+    }
+
+    GetPlayerPositionZ() {
+        return this.player.positionCmpt.getThreePosition().z;
     }
 
     OnGameExit() {

@@ -7,7 +7,7 @@ class BlockSystem {
     }
 
     OnGameStart() {
-
+        console.log("BlockSystem.OnGameStart()");
     }
 
     OnGameExit() {

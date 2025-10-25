@@ -26,7 +26,7 @@ class ControlSystem {
     }
 
     OnGameStart() {
-
+        console.log("ControlSystem.OnGameStart()");
     }
 
     OnGameExit() {

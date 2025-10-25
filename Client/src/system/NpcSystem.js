@@ -9,6 +9,7 @@ class NpcSystem {
     }
 
     OnGameStart() {
+        console.log("NpcSystem.OnGameStart()");
         this.npcs.length = 0;
         // for (let i = 0; i < 3; i++) {
         //     const x = Math.floor(Math.random() * (this.map.size - 2)) + 1;

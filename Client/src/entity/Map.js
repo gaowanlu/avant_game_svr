@@ -56,6 +56,7 @@ class Map extends Entity {
 
     // 初始化基础地面
     initTerrain() {
+        console.log("Map.initTerrain()");
         for (let x = 0; x < this.size; ++x) {
             for (let z = 0; z < this.size; ++z) {
                 let newTerrainBlock = new Block(x,

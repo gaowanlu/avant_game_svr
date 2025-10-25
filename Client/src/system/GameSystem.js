@@ -62,25 +62,34 @@ class GameSystem {
     // 玩家点击UI 开始按钮
     async OnStart() {
         console.log("游戏开始");
-
         // 保证资源加载完毕
         if (!AssetSystem.isLoadedOK()) {
             console.error("资源暂未加载完毕");
             return;
         }
 
+        // 开始MainLoop运行
         this.setIsRunning(true);
 
-        // 显示局内UI
-        // UISystem.OnGameStart();
-        // MapSystem.OnGameStart();
-        // BlockSystem.OnGameStart();
-        // NpcSystem.OnGameStart();
-        // PlayerSystem.OnGameStart();
-        // MapSystem.SetPointLightPosition(PlayerSystem.GetPlayerPosition().x,
-        //     PlayerSystem.GetPlayerPosition().y + 0.5,
-        //     PlayerSystem.GetPlayerPosition().z);
-        // ControlSystem.OnGameStart();
+        // 地图系统开始游戏
+        MapSystem.OnGameStart();
+
+        // 砖块系统开始游戏
+        BlockSystem.OnGameStart();
+
+        // NPC系统开始游戏
+        NpcSystem.OnGameStart();
+
+        // 主角系统开始游戏
+        PlayerSystem.OnGameStart();
+
+        // 地图系统设置点光位置
+        MapSystem.SetPointLightPosition(PlayerSystem.GetPlayerPositionX(),
+            PlayerSystem.GetPlayerPositionY() + 0.5,
+            PlayerSystem.GetPlayerPositionZ());
+
+        // 控制系统开始游戏
+        ControlSystem.OnGameStart();
 
         // 开始主循环
         this.lastTime = performance.now();
