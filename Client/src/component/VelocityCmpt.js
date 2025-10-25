@@ -7,8 +7,14 @@ class VelocityCmpt extends Component {
         this.velocity = new THREE.Vector3(0, 0, 0);
     }
 
-    getThreeVelocity() {
+    GetThreeVelocity() {
         return this.velocity;
+    }
+
+    SetVelocity(x, y, z) {
+        this.velocity.x = x;
+        this.velocity.y = y;
+        this.velocity.z = z;
     }
 };
 

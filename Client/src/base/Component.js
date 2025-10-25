@@ -3,7 +3,7 @@ class Component {
         this.componentType = componentType;
     }
 
-    getComponentType() {
+    GetComponentType() {
         return this.componentType;
     }
 };

@@ -12,8 +12,8 @@ class MapSystem {
         this.pointLight = null;
     }
 
-    init() {
-        console.log("MapSystem.init()");
+    Init() {
+        console.log("MapSystem.Init()");
         this.map = new Map(16);
 
         // 初始化渲染器
@@ -61,39 +61,59 @@ class MapSystem {
         }
 
         // 将场景绑定到地图对象
-        this.map.init(this.scene);
+        this.map.Init(this.scene);
+    }
+
+    GetMap() {
+        return this.map;
     }
 
     // OnGameStart
     OnGameStart() {
         console.log("MapSystem.OnGameStart()");
-        this.map.initTerrain();
+        this.map.InitTerrain();
     }
 
     OnGameExit() {
         console.log("MapSystem.OnGameExit()");
+
+        this.map.ClearAllBlocks();
     }
 
     OnMainLoop(playerPosition) {
         console.log("MapSystem.OnMainLoop playerPosition:", playerPosition);
 
-        // this.pointLight.position.set(this.player.position.x, this.player.position.y + 0.5, this.player.position.z);
+        this.pointLight.position.set(playerPosition.x, playerPosition.y + 0.5, playerPosition.z);
 
-        // try {
-        //     this.renderer.render(this.scene, this.camera);
-        // } catch (err) {
-        //     this.debug(`Render error: ${err.message}`);
-        //     console.error('Render error details:', err);
-        // }
+        try {
+            this.renderer.render(this.scene, this.camera);
+        } catch (err) {
+            console.log(`Render error: ${err.message}`);
+            console.error('Render error details:', err);
+        }
     }
 
-    getCamera() {
+    GetCamera() {
         return this.camera;
+    }
+
+    GetScene() {
+        return this.scene;
+    }
+
+    GetMapSize() {
+        return this.map.size;
     }
 
     SetPointLightPosition(x, y, z) {
         console.log(`MapSystem.SetPointLightPosition(${x}, ${y}, ${z})`);
         this.pointLight.position.set(x, y, z);
+    }
+
+    OnWindowResize() {
+        this.camera.aspect = window.innerWidth / window.innerHeight;
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(window.innerWidth, window.innerHeight)
     }
 };
 

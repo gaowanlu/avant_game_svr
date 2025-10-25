@@ -12,68 +12,68 @@ class Map extends Entity {
         this.threeScene = null;
     }
 
-    destroy() {
-        super.destroy();
+    Destroy() {
+        super.Destroy();
     }
 
     // 初始化地图传入Three.js场景
-    init(scene) {
+    Init(scene) {
         this.threeScene = scene;
     }
 
-    getBlockKey(x, y, z) {
+    GetBlockKey(x, y, z) {
         return `${z},${y},${z}`;
     }
 
     // 加入新的块到地图
-    setBlock(blockObj) {
-        const x = blockObj.getComponent(PositionCmpt).getX();
-        const y = blockObj.getComponent(PositionCmpt).getY();
-        const z = blockObj.getComponent(PositionCmpt).getZ();
-        const key = this.getBlockKey(x, y, z);
+    SetBlock(blockObj) {
+        const x = blockObj.GetComponent(PositionCmpt).GetX();
+        const y = blockObj.GetComponent(PositionCmpt).GetY();
+        const z = blockObj.GetComponent(PositionCmpt).GetZ();
+        const key = this.GetBlockKey(x, y, z);
         this.blocks[key] = blockObj;
         // 将块加入到目标场景中
-        this.blocks[key].addToScene(this.threeScene);
+        this.blocks[key].SddToScene(this.threeScene);
     }
 
     // 获取地图中的某个Block
-    getBlock(x, y, z) {
-        const key = this.getBlockKey(x, y, z);
+    GetBlock(x, y, z) {
+        const key = this.GetBlockKey(x, y, z);
         return this.blocks[key] || null;
     }
 
     // 从地图中删除某个块
-    removeBlock(x, y, z) {
-        const key = this.getBlockKey(x, y, z);
+    RemoveBlock(x, y, z) {
+        const key = this.GetBlockKey(x, y, z);
         if (this.blocks[key]) {
             // 从场景中移除
-            this.blocks[key].removeFromScene(this.threeScene);
-            this.blocks[key].destroy();
+            this.blocks[key].RemoveFromScene(this.threeScene);
+            this.blocks[key].Destroy();
             // 从地图移除
             delete this.blocks[key];
         }
     }
 
     // 初始化基础地面
-    initTerrain() {
-        console.log("Map.initTerrain()");
+    InitTerrain() {
+        console.log("Map.InitTerrain()");
         for (let x = 0; x < this.size; ++x) {
             for (let z = 0; z < this.size; ++z) {
                 let newTerrainBlock = new Block(x,
                     0,
                     z,
-                    Macro.materialNameMacro.DIRT_TERRAIN,
-                    AssetSystemInstance.getMaterial(Macro.materialNameMacro.DIRT_TERRAIN));
-                this.setBlock(newTerrainBlock);
+                    Macro.MaterialNameMacro.DIRT_TERRAIN,
+                    AssetSystemInstance.GetMaterial(Macro.MaterialNameMacro.DIRT_TERRAIN));
+                this.SetBlock(newTerrainBlock);
             }
         }
     }
 
     // 清空地图所有块
-    clearAllBlocks() {
+    ClearAllBlocks() {
         Object.keys(this.blocks).forEach(key => {
-            this.blocks[key].destroy();
-            this.blocks[key].removeFromScene(this.threeScene);
+            this.blocks[key].Destroy();
+            this.blocks[key].RemoveFromScene(this.threeScene);
         });
         this.blocks = {};
     }

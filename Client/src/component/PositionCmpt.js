@@ -7,31 +7,31 @@ class PositionCmpt extends Component {
         this.position = new THREE.Vector3(x, y, z);
     }
 
-    getThreePosition() {
+    GetThreePosition() {
         return this.position;
     }
 
-    getX() {
+    GetX() {
         return this.position.x;
     }
 
-    getY() {
+    GetY() {
         return this.position.y;
     }
 
-    getZ() {
+    GetZ() {
         return this.position.z;
     }
 
-    setX(x) {
+    SetX(x) {
         this.position.x = x;
     }
 
-    setY(y) {
+    SetY(y) {
         this.position.y = y;
     }
 
-    setZ(z) {
+    SetZ(z) {
         this.position.z = z;
     }
 };

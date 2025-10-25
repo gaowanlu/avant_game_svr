@@ -5,10 +5,10 @@ class CameraCmpt extends Component {
         super(CameraCmpt);
         this.camera = camera;
     }
-    getCamera() {
+    GetCamera() {
         return this.camera;
     }
-    setPosition(position) {
+    SetPosition(position) {
         this.camera.position.copy(position);
     }
 };

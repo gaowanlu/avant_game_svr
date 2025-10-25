@@ -3,7 +3,7 @@ class EntityManager {
         this.nextEntityId = 0;
     }
 
-    createEntity(entity) {
+    CreateEntity(entity) {
         const entityId = ++this.nextEntityId;
 
         entity.entityId = entityId;

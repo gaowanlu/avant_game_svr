@@ -8,11 +8,11 @@ class Player extends Entity {
     constructor(x, y, z, camera) {
         super();
         this.positionCmpt = new PositionCmpt(x, y, z);
-        this.addComponent(this.positionCmpt);
+        this.AddComponent(this.positionCmpt);
         this.cameraCmpt = new CameraCmpt(camera);
-        this.addComponent(this.cameraCmpt);
+        this.AddComponent(this.cameraCmpt);
         this.velocityCmpt = new VelocityCmpt();
-        this.addComponent(this.velocityCmpt);
+        this.AddComponent(this.velocityCmpt);
 
         this.height = 1.8;
         this.width = 0.4;
@@ -27,47 +27,51 @@ class Player extends Entity {
         // 鼠标灵敏度参数
         this.mouseSensitivity = 0.002;
         // 设置相机位置
-        this.cameraCmpt.setPosition(this.positionCmpt.getThreePosition());
+        this.cameraCmpt.SetPosition(this.positionCmpt.GetThreePosition());
         this.UpdateCameraPositionToPlayerPosition();
     }
 
-    setPosition(x, y, z) {
-        this.positionCmpt.getThreePosition().set(x, y, z);
+    SetPosition(x, y, z) {
+        this.positionCmpt.GetThreePosition().set(x, y, z);
     }
 
-    setTargetRotation(x, y) {
+    SetVelocity(x, y, z) {
+        this.velocityCmpt.SetVelocity(x, y, z);
+    }
+
+    SetTargetRotation(x, y) {
         this.targetRotation.x = x;
         this.targetRotation.y = y;
     }
 
-    setCurrentRotation(x, y) {
+    SetCurrentRotation(x, y) {
         this.currentRotation.x = x;
         this.currentRotation.y = y;
     }
 
     UpdateCameraPositionToPlayerPosition() {
-        this.cameraCmpt.setPosition(this.positionCmpt.getThreePosition());
+        this.cameraCmpt.SetPosition(this.positionCmpt.GetThreePosition());
     }
 
-    destroy() {
-        super.destroy();
+    Destroy() {
+        super.Destroy();
     }
 
-    canMoveTo(x, y, z, map) {
+    CanMoveTo(x, y, z, map) {
         const feet = Math.floor(y - this.height);
         const head = Math.floor(y);
         const checkX = Math.floor(x);
         const checkZ = Math.floor(z);
 
-        const feetBlock = y > this.height + 0.1 ? map.getBlock(checkX, feet, checkZ) : null;
-        const headBlock = map.getBlock(checkX, head, checkZ);
+        const feetBlock = y > this.height + 0.1 ? map.GetBlock(checkX, feet, checkZ) : null;
+        const headBlock = map.GetBlock(checkX, head, checkZ);
         if (feetBlock || headBlock) {
             return false;
         }
         return true;
     }
 
-    updateRotation(event, debugCallbackFunc) {
+    UpdateRotation(event, debugCallbackFunc) {
         // 提高灵敏度，加快视角旋转
         this.targetRotation.y -= event.movementX * this.mouseSensitivity;
         this.targetRotation.x -= event.movementY * this.mouseSensitivity;
@@ -80,57 +84,57 @@ class Player extends Entity {
     }
 
 
-    update(map, keys, debugCallbackFunc) {
-        this.velocityCmpt.getThreeVelocity().y += this.gravity;
+    Update(map, keys, debugCallbackFunc) {
+        // this.velocityCmpt.GetThreeVelocity().y += this.gravity;
 
-        this.positionCmpt.getThreePosition().position.add(this.velocityCmpt.getThreeVelocity());
+        // this.positionCmpt.GetThreePosition().position.add(this.velocityCmpt.GetThreeVelocity());
 
-        // 地面碰撞检测
-        if (this.positionCmpt.getThreePosition().y < this.height) {
-            this.positionCmpt.getThreePosition().y = this.height;
-            this.velocityCmpt.getThreeVelocity().y = 0;
-        }
+        // // 地面碰撞检测
+        // if (this.positionCmpt.GetThreePosition().y < this.height) {
+        //     this.positionCmpt.GetThreePosition().y = this.height;
+        //     this.velocityCmpt.GetThreeVelocity().y = 0;
+        // }
 
-        // 跳跃逻辑：仅当玩家在地面上时允许跳跃
-        // if (keys['Space'] && this.getComponent(PositionCmpt).getThreePosition().y <= this.height) {
-        //     this.velocityCmpt.getThreeVelocity().y = this.jumpStrength;
+        // // 跳跃逻辑：仅当玩家在地面上时允许跳跃
+        // // if (keys['Space'] && this.GetComponent(PositionCmpt).GetThreePosition().y <= this.height) {
+        // //     this.velocityCmpt.GetThreeVelocity().y = this.jumpStrength;
+        // //     debugCallbackFunc('Player jumped');
+        // // }
+        // if (keys['Space']) {
+        //     this.velocityCmpt.GetThreeVelocity().y = this.jumpStrength;
         //     debugCallbackFunc('Player jumped');
         // }
-        if (keys['Space']) {
-            this.velocityCmpt.getThreeVelocity().y = this.jumpStrength;
-            debugCallbackFunc('Player jumped');
-        }
 
-        const direction = new THREE.Vector3();
-        if (keys['KeyW']) direction.z -= 1;
-        if (keys['KeyS']) direction.z += 1;
-        if (keys['KeyA']) direction.x -= 1;
-        if (keys['KeyD']) direction.x += 1;
+        // const direction = new THREE.Vector3();
+        // if (keys['KeyW']) direction.z -= 1;
+        // if (keys['KeyS']) direction.z += 1;
+        // if (keys['KeyA']) direction.x -= 1;
+        // if (keys['KeyD']) direction.x += 1;
 
-        if (direction.length() > 0) {
-            direction.normalize();
-            // 使用 targetRotation.y 替代 currentRotation.y，移除平滑延迟
-            const move = direction.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), this.targetRotation.y);
-            move.y = 0;
-            move.multiplyScalar(this.speed);
-            const newPos = this.positionCmpt.getThreePosition().clone().add(move);
+        // if (direction.length() > 0) {
+        //     direction.normalize();
+        //     // 使用 targetRotation.y 替代 currentRotation.y，移除平滑延迟
+        //     const move = direction.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), this.targetRotation.y);
+        //     move.y = 0;
+        //     move.multiplyScalar(this.speed);
+        //     const newPos = this.positionCmpt.GetThreePosition().clone().add(move);
 
-            if (this.canMoveTo(newPos.x, this.positionCmpt.getThreePosition().y, newPos.z, map)) {
-                this.positionCmpt.getThreePosition().x = newPos.x;
-                this.positionCmpt.getThreePosition().z = newPos.z;
-                debugCallbackFunc(`Move allowed to: x=${newPos.x.toFixed(2)}, y=${newPos.y.toFixed(2)}, z=${newPos.z.toFixed(2)}`);
-            } else {
-                debugCallbackFunc(`Collision at: x=${Math.floor(newPos.x)}, y=${Math.floor(newPos.y - this.height)}, z=${Math.floor(newPos.z)}`);
-            }
-        }
+        //     if (this.CanMoveTo(newPos.x, this.positionCmpt.GetThreePosition().y, newPos.z, map)) {
+        //         this.positionCmpt.GetThreePosition().x = newPos.x;
+        //         this.positionCmpt.GetThreePosition().z = newPos.z;
+        //         debugCallbackFunc(`Move allowed to: x=${newPos.x.toFixed(2)}, y=${newPos.y.toFixed(2)}, z=${newPos.z.toFixed(2)}`);
+        //     } else {
+        //         debugCallbackFunc(`Collision at: x=${Math.floor(newPos.x)}, y=${Math.floor(newPos.y - this.height)}, z=${Math.floor(newPos.z)}`);
+        //     }
+        // }
 
-        // 提高平滑因子，减少旋转延迟
-        this.currentRotation.x += (this.targetRotation.x - this.currentRotation.x) * this.rotationSmoothing;
-        this.currentRotation.y += (this.targetRotation.y - this.currentRotation.y) * this.rotationSmoothing;
+        // // 提高平滑因子，减少旋转延迟
+        // this.currentRotation.x += (this.targetRotation.x - this.currentRotation.x) * this.rotationSmoothing;
+        // this.currentRotation.y += (this.targetRotation.y - this.currentRotation.y) * this.rotationSmoothing;
 
-        // 更新相机旋转
-        this.cameraCmpt.getCamera().rotation.set(this.currentRotation.x, this.currentRotation.y, 0);
-        this.cameraCmpt.getCamera().position.copy(this.positionCmpt.getThreePosition());
+        // // 更新相机旋转
+        // this.cameraCmpt.GetCamera().rotation.set(this.currentRotation.x, this.currentRotation.y, 0);
+        // this.cameraCmpt.GetCamera().position.copy(this.positionCmpt.GetThreePosition());
     }
 };
 

@@ -1,11 +1,11 @@
 class Macro {
-    static textureNameMacro = {
+    static TextureNameMacro = {
         GRASS_TOP: 'GrassTop',
         GRASS_SIDE: 'GrassSide',
         DIRT: 'Dirt'
     };
 
-    static materialNameMacro = {
+    static MaterialNameMacro = {
         GRASS_TERRAIN: 'GrassTerrain',
         DIRT_TERRAIN: 'DirtTerrain',
         TEXTURED_GRASS: 'TexturedGrass',

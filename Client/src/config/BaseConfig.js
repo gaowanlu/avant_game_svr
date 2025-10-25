@@ -1,6 +1,6 @@
 class BaseConfig {
-    static svrHost = "www.mfavant.xyz";
-    static svrPort = 443;
+    static SVR_HOST = "www.mfavant.xyz";
+    static SVR_PORT = 443;
 };
 
 module.exports = BaseConfig;

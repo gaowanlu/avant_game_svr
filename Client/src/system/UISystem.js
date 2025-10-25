@@ -13,8 +13,8 @@ class UISystem {
         // this.debugMessages = [];
     }
 
-    init(OnGameStartCallback, OnGameExitCallback) {
-        console.log("UISystem.init()");
+    Init(OnGameStartCallback, OnGameExitCallback, OnWindowResize) {
+        console.log("UISystem.Init()");
         // 开始游戏按钮
         let OnStartButtonClick = () => {
             console.log("开始游戏按钮被点击");
@@ -35,17 +35,15 @@ class UISystem {
         window.addEventListener('resize', () => {
             console.log(`窗口大小改变了 window.innerWidth ${window.innerWidth} window.innerHeight ${window.innerHeight}`);
 
-            // this.camera.aspect = window.innerWidth / window.innerHeight;
-            // this.camera.updateProjectionMatrix();
-            // this.renderer.setSize(window.innerWidth, window.innerHeight);
+            OnWindowResize();
         });
     }
 
-    // bindPlayBlockTypeSelectChange(playBlockTypeCallbackFunc) {
+    // BindPlayBlockTypeSelectChange(playBlockTypeCallbackFunc) {
     //     // this.playBlockTypeSelect.addEventListener('change', (e) => playBlockTypeCallbackFunc(e.target.value));
     // }
 
-    showStartScreen() {
+    ShowStartScreen() {
         this.startScreen.style.display = 'flex';
         // this.Game.renderer.domElement.style.display = 'none';
         // this.crosshair.style.display = 'none';
@@ -56,14 +54,14 @@ class UISystem {
 
     OnGameStart() {
         console.log("UI.System OnGameStart()");
-        this.showInGameUI();
+        this.ShowInGameUI();
     }
 
     OnGameExit() {
-        this.showStartScreen();
+        this.ShowStartScreen();
     }
 
-    showInGameUI() {
+    ShowInGameUI() {
         this.startScreen.style.display = 'none';
         // this.Game.renderer.domElement.style.display = 'block';
         // this.crosshair.style.display = 'block';
@@ -72,12 +70,12 @@ class UISystem {
         this.inGameUI.style.display = 'block';
     }
 
-    setDebugText(text) {
+    SetDebugText(text) {
         console.log(`UISystem setDebugText: ${text}`);
         // this.debugText.textContent = text;
     }
 
-    updateDebugPanel(message) {
+    UpdateDebugPanel(message) {
         // this.debugMessages.push(message);
         // if (this.debugMessages.length > 5) this.debugMessages.shift();
         // let debugText = '';

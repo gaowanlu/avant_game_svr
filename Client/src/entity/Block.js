@@ -6,7 +6,7 @@ class Block extends Entity {
     constructor(x, y, z, blockType, material) {
         super();
         this.positionCmpt = new PositionCmpt(x, y, z);
-        super.addComponent(this.positionCmpt);
+        super.AddComponent(this.positionCmpt);
         this.blockType = blockType;
         this.material = material;
 
@@ -21,15 +21,15 @@ class Block extends Entity {
         this.mesh.receiveShadow = true;
     }
 
-    destroy() {
-        super.destroy();
+    Destroy() {
+        super.Destroy();
     }
 
-    addToScene(scene) {
+    SddToScene(scene) {
         scene.add(this.mesh);
     }
 
-    removeFromScene(scene) {
+    RemoveFromScene(scene) {
         scene.remove(this.mesh);
     }
 };

@@ -2,8 +2,8 @@ class BlockSystem {
     constructor() {
     }
 
-    init() {
-        console.log("BlockSystem.init()");
+    Init() {
+        console.log("BlockSystem.Init()");
     }
 
     OnGameStart() {
@@ -12,7 +12,6 @@ class BlockSystem {
 
     OnGameExit() {
         console.log("BlockSystem.OnGameExit()");
-        // this.map.clearAllBlocks();
     }
 
     OnMainLoop() {

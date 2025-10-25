@@ -2,36 +2,35 @@ const EntityManagerInstance = require("./EntityManger");
 
 class Entity {
     constructor() {
-        this.entityId = EntityManagerInstance.createEntity(this);
+        this.entityId = EntityManagerInstance.CreateEntity(this);
         this.components = new Map;
     }
 
-    getEntityId() {
+    GetEntityId() {
         return this.entityId;
     }
 
-    addComponent(component) {
-        this.components.set(component.getComponentType(), component);
+    AddComponent(component) {
+        this.components.set(component.GetComponentType(), component);
         return this;
     }
 
-    getComponent(type) {
+    GetComponent(type) {
         return this.components.get(type);
     }
 
-    removeComponent(type) {
+    RemoveComponent(type) {
         this.components.delete(type);
     }
 
-    hasComponent(type) {
+    HasComponent(type) {
         return this.components.has(type);
     }
 
     OnEvent(eventType, data) {
     }
 
-    destroy() {
-        EntityManagerInstance.removeEntity(this.getEntityId())
+    Destroy() {
     }
 }
 

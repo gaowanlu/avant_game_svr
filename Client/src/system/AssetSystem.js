@@ -11,18 +11,18 @@ class AssetSystem {
         this.texturesLoaded = false;
     }
 
-    isLoadedOK() {
+    IsLoadedOK() {
         return this.texturesLoaded;
     }
 
-    loadAssets() {
+    LoadAssets() {
         return new Promise((resolve, reject) => {
             let loadedCount = 0;
 
             const resources = [
-                { name: Macro.textureNameMacro.GRASS_TOP, path: 'assets/grass_block_top.png' },
-                { name: Macro.textureNameMacro.GRASS_SIDE, path: 'assets/grass_block_side.png' },
-                { name: Macro.textureNameMacro.DIRT, path: 'assets/dirt.png' }
+                { name: Macro.TextureNameMacro.GRASS_TOP, path: 'assets/grass_block_top.png' },
+                { name: Macro.TextureNameMacro.GRASS_SIDE, path: 'assets/grass_block_side.png' },
+                { name: Macro.TextureNameMacro.DIRT, path: 'assets/dirt.png' }
             ];
 
             const onLoad = (textureName, texture) => {
@@ -31,7 +31,7 @@ class AssetSystem {
                 if (loadedCount === resources.length) {
                     this.texturesLoaded = true;
                     // 当textxture加载完成后，开始初始化材质
-                    this.initializeMaterials();
+                    this.InitializeMaterials();
                     resolve();
                 }
             };
@@ -58,17 +58,17 @@ class AssetSystem {
         });
     }
 
-    initializeMaterials() {
-        this.materials[Macro.materialNameMacro.GRASS_TERRAIN] = new THREE.MeshLambertMaterial({ color: 0x4CAF50 });
-        this.materials[Macro.materialNameMacro.DIRT_TERRAIN] = new THREE.MeshLambertMaterial({ color: 0x8b4513 });
-        this.materials[Macro.materialNameMacro.TEXTURED_GRASS] = new THREE.MeshLambertMaterial({ map: this.textures[Macro.textureNameMacro.GRASS_SIDE] });
-        this.materials[Macro.materialNameMacro.TEXTURED_DIRT] = new THREE.MeshLambertMaterial({ map: this.textures[Macro.textureNameMacro.DIRT] });
-        this.materials[Macro.materialNameMacro.TEXTURED_STONE] = new THREE.MeshLambertMaterial({ map: this.textures[Macro.textureNameMacro.GRASS_TOP] });
-        this.materials[Macro.materialNameMacro.OUTLINE] = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true });
-        this.materials[Macro.materialNameMacro.NPC] = new THREE.LineBasicMaterial({ color: 0xff0000 });
+    InitializeMaterials() {
+        this.materials[Macro.MaterialNameMacro.GRASS_TERRAIN] = new THREE.MeshLambertMaterial({ color: 0x4CAF50 });
+        this.materials[Macro.MaterialNameMacro.DIRT_TERRAIN] = new THREE.MeshLambertMaterial({ color: 0x8b4513 });
+        this.materials[Macro.MaterialNameMacro.TEXTURED_GRASS] = new THREE.MeshLambertMaterial({ map: this.textures[Macro.TextureNameMacro.GRASS_SIDE] });
+        this.materials[Macro.MaterialNameMacro.TEXTURED_DIRT] = new THREE.MeshLambertMaterial({ map: this.textures[Macro.TextureNameMacro.DIRT] });
+        this.materials[Macro.MaterialNameMacro.TEXTURED_STONE] = new THREE.MeshLambertMaterial({ map: this.textures[Macro.TextureNameMacro.GRASS_TOP] });
+        this.materials[Macro.MaterialNameMacro.OUTLINE] = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true });
+        this.materials[Macro.MaterialNameMacro.NPC] = new THREE.LineBasicMaterial({ color: 0xff0000 });
     }
 
-    getMaterial(type) {
+    GetMaterial(type) {
         if (!this.materials[type]) {
             console.error("no such material: " + type);
         }

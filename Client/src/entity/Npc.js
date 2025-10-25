@@ -12,9 +12,9 @@ class Npc extends Entity {
         // 设置 NPC 初始位置为 (x, 1, z)
         // y=1 表示 NPC 固定在地面（y=1 的高度)
         this.positionCmpt = new PositionCmpt(x, 1, z);
-        this.addComponent(this.positionCmpt);
+        this.AddComponent(this.positionCmpt);
         this.velocityCmpt = new VelocityCmpt();
-        this.addComponent(this.velocityCmpt);
+        this.AddComponent(this.velocityCmpt);
 
         // 创建一个 Three.js Group 对象，用于组织 NPC 的可视化模型
         this.group = new THREE.Group();
@@ -57,20 +57,20 @@ class Npc extends Entity {
         this.speed = 0.05;
     }
 
-    destroy() {
-        super.destroy();
+    Destroy() {
+        super.Destroy();
     }
 
     // 方法：检查 NPC 是否可以移动到指定位置 (x, z)
     // 参数：x, z（目标坐标），map（游戏世界地图），worldSize（世界边界大小）
-    canMoveTo(x, z, map, worldSize) {
+    CanMoveTo(x, z, map, worldSize) {
         // 将目标坐标取整，转换为格子坐标（游戏世界以整数格子划分）
         const checkX = Math.floor(x);
         const checkZ = Math.floor(z);
 
         // 检查目标位置 (checkX, 1, checkZ) 是否有方块
         // y=1 表示检查地面高度的方块
-        const block = map.getBlock(checkX, 1, checkZ);
+        const block = map.GetBlock(checkX, 1, checkZ);
 
         // 检查是否超出世界边界或有方块阻挡
         // x, z 的范围限制在 [0.1, worldSize - 0.1]，避免 NPC 移出世界
@@ -85,18 +85,18 @@ class Npc extends Entity {
 
     // 方法：从场景中移除 NPC
     // 参数：scene（Three.js 场景）
-    remove(scene) {
+    Remove(scene) {
         // 从场景中移除 NPC 的 Group 对象，删除其可视化模型
         scene.remove(this.group);
     }
 
     // 方法：更新 NPC 的状态（每帧调用）
     // 参数：map（地图），worldSize（世界大小），debugCallback（调试回调函数）
-    update(map, worldSize, debugCallback) {
+    Update(map, worldSize, debugCallback) {
         // 减少移动计时器（假设游戏以 60 帧/秒运行，1/60 秒每帧）
         this.moveTimer -= 1 / 60;
 
-        velocity = this.velocityCmpt.getThreeVelocity();
+        let velocity = this.velocityCmpt.GetThreeVelocity();
 
         // 当计时器小于等于 0 时，随机生成新的移动速度
         if (this.moveTimer <= 0) {
@@ -111,14 +111,14 @@ class Npc extends Entity {
         }
 
         // 计算新位置：当前位置加上速度向量
-        const newPos = this.positonCmpt.getThreePosition().clone().add(velocity);
-        position = this.positionCmpt.getThreePosition();
+        const newPos = this.positionCmpt.GetThreePosition().clone().add(velocity);
+        let position = this.positionCmpt.GetThreePosition();
 
         // 检查是否可以移动到新位置
-        if (this.canMoveTo(newPos.x, newPos.z, map, worldSize)) {
+        if (this.CanMoveTo(newPos.x, newPos.z, map, worldSize)) {
             // 如果可移动，更新 NPC 的 x 和 z 坐标
-            this.positonCmpt.setX(newPos.x);
-            this.positonCmpt.setZ(newPos.z);
+            this.positionCmpt.SetX(newPos.x);
+            this.positionCmpt.SetZ(newPos.z);
 
             // 限制 NPC 位置在世界边界内（[0.1, worldSize - 0.1]）
             position.x = Math.max(0.1, Math.min(worldSize - 0.1, position.x));

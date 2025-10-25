@@ -20,42 +20,44 @@ class GameSystem {
         this.lastTime = performance.now();
 
         // 网络
-        this.network = new Network(BaseConfig.svrHost, BaseConfig.svrPort);
+        this.network = new Network(BaseConfig.SVR_HOST, BaseConfig.SVR_PORT);
     }
 
-    init() {
+    Init() {
         // 网络初始化
-        this.network.connect();
+        this.network.Connect();
         // UI初始化
-        UISystem.init(() => {
+        UISystem.Init(() => {
             this.OnStart();
         }, () => {
             this.OnExit();
+        }, () => {
+            this.OnWindowResize();
         });
-        UISystem.showStartScreen();
+        UISystem.ShowStartScreen();
 
         // 地图场景系统初始化
-        MapSystem.init();
+        MapSystem.Init();
 
         // 玩家角色系统初始化
-        PlayerSystem.init(MapSystem.getCamera());
+        PlayerSystem.Init(MapSystem.GetCamera());
 
         // 砖块系统初始化
-        BlockSystem.init();
+        BlockSystem.Init();
 
         // Npc小人系统初始化
-        NpcSystem.init();
+        NpcSystem.Init();
 
         // 素材系统初始化
-        AssetSystem.loadAssets().catch(err => {
+        AssetSystem.LoadAssets().catch(err => {
             console.error(`Failed to load assets: ${err.message}`);
         });
 
         // 控制系统初始化
-        ControlSystem.init();
+        ControlSystem.Init();
     }
 
-    setIsRunning(val) {
+    SetIsRunning(val) {
         this.isRunning = val;
     }
 
@@ -63,13 +65,13 @@ class GameSystem {
     async OnStart() {
         console.log("游戏开始");
         // 保证资源加载完毕
-        if (!AssetSystem.isLoadedOK()) {
+        if (!AssetSystem.IsLoadedOK()) {
             console.error("资源暂未加载完毕");
             return;
         }
 
         // 开始MainLoop运行
-        this.setIsRunning(true);
+        this.SetIsRunning(true);
 
         // 地图系统开始游戏
         MapSystem.OnGameStart();
@@ -93,7 +95,7 @@ class GameSystem {
 
         // 开始主循环
         this.lastTime = performance.now();
-        this.mainLoop();
+        this.MainLoop();
     }
 
     // 玩家点UI 结束退出按钮回调
@@ -105,7 +107,7 @@ class GameSystem {
             cancelAnimationFrame(this.animationFrameId);
             this.animationFrameId = null;
         }
-        this.setIsRunning(false);
+        this.SetIsRunning(false);
 
         MapSystem.OnGameExit();
         BlockSystem.OnGameExit();
@@ -114,13 +116,17 @@ class GameSystem {
         ControlSystem.OnGameExit();
     }
 
-    async mainLoop() {
+    async OnWindowResize() {
+        MapSystem.OnWindowResize();
+    }
+
+    async MainLoop() {
         if (!this.isRunning) {
             console.log("!this.isRunning");
             return;
         }
 
-        this.animationFrameId = requestAnimationFrame(this.mainLoop.bind(this));
+        this.animationFrameId = requestAnimationFrame(this.MainLoop.bind(this));
 
         // 计算时间步长秒
         const currentTime = performance.now();

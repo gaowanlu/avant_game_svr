@@ -16,13 +16,13 @@ class ControlSystem {
         this.isBreaking = false;
         // 设置默认选择的方块类型为 'dirt'（泥土）
 
-        // this.selectedBlockType = this.assetManager.materialNameMacro.TEXTURED_GRASS;
+        // this.selectedBlockType = this.assetManager.MaterialNameMacro.TEXTURED_GRASS;
         // // 设置事件监听器，处理键盘、鼠标等输入
-        // this.setupEventListeners();
+        // this.SetupEventListeners();
     }
 
-    init() {
-        console.log("ControlSystem.init()");
+    Init() {
+        console.log("ControlSystem.Init()");
     }
 
     OnGameStart() {
@@ -36,16 +36,16 @@ class ControlSystem {
     OnMainLoop() {
         console.log("ControlSystem.OnMainLoop()");
 
-        // this.control.updateBlockHighlight();
+        // this.control.UpdateBlockHighlight();
     }
 
-    setBlockType(type) {
+    SetBlockType(type) {
         // this.selectedBlockType = type;
         // this.Game.debug(`Block type changed to: ${type}`);
     }
 
     // 方法：设置事件监听器，处理键盘、鼠标输入和指针锁定
-    setupEventListeners() {
+    SetupEventListeners() {
         // 监听键盘按下事件
         document.addEventListener('keydown', (e) => {
             // 如果游戏未运行，忽略事件
@@ -93,7 +93,7 @@ class ControlSystem {
                     // 延迟 300ms 后移除方块，模拟破坏动画
                     setTimeout(() => {
                         // 移除地图中指定位置的方块（取整坐标）
-                        this.map.removeBlock(Math.floor(pos.x), Math.floor(pos.y), Math.floor(pos.z));
+                        this.map.RemoveBlock(Math.floor(pos.x), Math.floor(pos.y), Math.floor(pos.z));
                         // 重置破坏状态
                         this.isBreaking = false;
                     }, 300);
@@ -108,9 +108,9 @@ class ControlSystem {
                     const y = Math.floor(newPos.y);
                     const z = Math.floor(newPos.z);
                     // 检查目标位置是否为空（无方块）
-                    if (!this.map.getBlock(x, y, z)) {
+                    if (!this.map.GetBlock(x, y, z)) {
                         // 在目标位置放置新方块，使用当前选择的方块类型和对应材质
-                        this.map.setBlock(x, y, z, this.selectedBlockType, this.assetManager.getMaterial(this.selectedBlockType));
+                        this.map.SetBlock(x, y, z, this.selectedBlockType, this.assetManager.getMaterial(this.selectedBlockType));
                         // 输出调试信息，记录放置的方块类型和位置
                         this.Game.debug(`Placed block (${this.selectedBlockType}) at: x=${x}, y=${y}, z=${z}`);
                     }
@@ -135,7 +135,7 @@ class ControlSystem {
             if (!this.Game.isRunning) return;
             // 检查指针是否锁定在渲染器画布上
             // 更新 UI 调试文本，提示玩家当前状态
-            this.Game.ui.setDebugText(document.pointerLockElement === this.Game.renderer.domElement
+            this.Game.ui.SetDebugText(document.pointerLockElement === this.Game.renderer.domElement
                 ? 'Pointer locked - Use WASD to move'
                 : 'Click to lock pointer');
         });
@@ -145,12 +145,12 @@ class ControlSystem {
             // 如果游戏未运行或指针未锁定，忽略事件
             if (!this.Game.isRunning || document.pointerLockElement !== this.Game.renderer.domElement) return;
             // 调用玩家对象的 updateRotation 方法，更新视角旋转（俯仰和偏航）
-            this.player.updateRotation(e, this.Game.debug.bind(this.Game));
+            this.player.UpdateRotation(e, this.Game.debug.bind(this.Game));
         });
     }
 
     // 方法：更新方块高亮效果
-    updateBlockHighlight() {
+    UpdateBlockHighlight() {
         // 如果当前有高亮模型，先从场景中移除
         if (this.currentOutline) {
             this.scene.remove(this.currentOutline);
@@ -167,7 +167,7 @@ class ControlSystem {
             // 创建高亮方块的几何体（略大于 1x1x1，以包裹目标方块）
             const geometry = new THREE.BoxGeometry(1.01, 1.01, 1.01);
             // 创建高亮模型，使用资源管理器中的高亮材质
-            this.currentOutline = new THREE.Mesh(geometry, this.assetManager.getMaterial(this.assetManager.materialNameMacro.OUTLINE));
+            this.currentOutline = new THREE.Mesh(geometry, this.assetManager.getMaterial(this.assetManager.MaterialNameMacro.OUTLINE));
             // 设置高亮模型位置，与目标方块对齐
             this.currentOutline.position.copy(pos);
             // 将高亮模型添加到场景中

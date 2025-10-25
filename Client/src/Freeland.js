@@ -13,7 +13,7 @@ Freeland.OnDOMContentLoaded = function () {
     this.ConsoleVersion();
 
     // 游戏系统实例初始化
-    GameSystemInstance.init();
+    GameSystemInstance.Init();
 }
 
 window.addEventListener('DOMContentLoaded', () => {

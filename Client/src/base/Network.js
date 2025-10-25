@@ -7,7 +7,7 @@ class Network {
         this.client = null;
     }
 
-    connect() {
+    Connect() {
         if (this.client && !this.client.destroyed) {
             console.error(`Client already exists. ${this.host}:${this.port}`);
             return;
@@ -23,31 +23,31 @@ class Network {
         })
 
         this.client.on('error', (error) => {
-            console.error(`Error connecting to server ${this.host}:${this.port}: ${error}`);
-            this.close();
+            console.error(`Error Connecting to server ${this.host}:${this.port}: ${error}`);
+            this.Close();
             setTimeout(() => {
-                this.connect();
+                this.Connect();
             }, 1);
         });
 
         this.client.on('close', () => {
             console.log(`Connection closed with server ${this.host}:${this.port}`)
-            this.close();
+            this.Close();
             setTimeout(() => {
-                this.connect();
+                this.Connect();
             }, 1);
         });
 
         this.client.connect(this.port, this.host);
     }
 
-    send(data) {
+    Send(data) {
         if (this.client && !this.client.destroyed) {
             this.client.write(data);
         }
     }
 
-    close() {
+    Close() {
         if (this.client) {
             this.client.destroy();
             this.client = null;
